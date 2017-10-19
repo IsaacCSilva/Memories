@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "411261356695",
+    "project_id": "firebase-memoriesapplication"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:411261356695:android:0088e93de764412e",
+        "android_client_info": {
+          "package_name": "edu.csulb.memoriesapplication"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "411261356695-ceh4lsb4v43442jaqnito19nn0l46d9i.apps.googleusercontent.com",
+          "client_type": 3
+        },
+        {
+          "client_id": "411261356695-086d1oli6khr36t18822mdmc19sfom41.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "edu.csulb.memoriesapplication",
+            "certificate_hash": "5b52d710f54a07168f1a20b071b1c54a5093a4a7"
+          }
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC-JavtpD9VWnktVb7qEdx1D77xVoBt8qQ"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 1
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
