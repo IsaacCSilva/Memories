@@ -1,6 +1,7 @@
 package edu.csulb.memoriesapplication;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.util.Log;
@@ -60,27 +61,30 @@ public class CreateAccountActivity extends Activity implements View.OnClickListe
         }
         else if(!userPass.equals(userPass2)) {
             printToast("Passwords do not match.");
-        }
-
-        mAuth.createUserWithEmailAndPassword(userEmailCreate, userPass).addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
-            @Override
-            public void onComplete(@NonNull Task<AuthResult> task) {
-                if(task.isSuccessful()) {
-                    FirebaseUser user = mAuth.getCurrentUser();
-                    //TODO: need to send email or phone verification
-                } else {
-                    try{
-                        throw task.getException();
-                    }catch(FirebaseAuthInvalidCredentialsException malformedEmailException) {
-                        printToast("Email format is not valid.");
-                    }catch(FirebaseAuthUserCollisionException duplicateEmail) {
-                        printToast("Email already exists.");
-                    }catch(Exception exception) {
-                        Log.w(TAG, "Failure to create use email", task.getException());
+        }else {
+            mAuth.createUserWithEmailAndPassword(userEmailCreate, userPass).addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
+                @Override
+                public void onComplete(@NonNull Task<AuthResult> task) {
+                    if (task.isSuccessful()) {
+                        FirebaseUser user = mAuth.getCurrentUser();
+                        //TODO: need to send email or phone verification
+                        //TODO: Beef up security for this part
+                        Intent intent = new Intent(CreateAccountActivity.this, TrendingActivity.class);
+                        startActivity(intent);
+                    } else {
+                        try {
+                            throw task.getException();
+                        } catch (FirebaseAuthInvalidCredentialsException malformedEmailException) {
+                            printToast("Email format is not valid.");
+                        } catch (FirebaseAuthUserCollisionException duplicateEmail) {
+                            printToast("Email already exists.");
+                        } catch (Exception exception) {
+                            Log.w(TAG, "Failure to create user account", task.getException());
+                        }
                     }
                 }
-            }
-        });
+            });
+        }
     }
 
     private boolean passwordGuidelineCheck(String password) {
