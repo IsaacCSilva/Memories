@@ -1,12 +1,56 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.design.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="edu.csulb.memoriesapplication.LoginActivity">
+    tools:context="edu.csulb.memoriesapplication.LoginActivity"
+    android:orientation="vertical">
 
 
-    <include layout="@layout/content_login" />
+    <EditText
+        android:id="@+id/user_email_login"
+        android:layout_width="300dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:hint="@string/login_hint"
+        android:textSize="18dp"
+        android:layout_marginTop="140dp"/>
+    <EditText
+        android:id="@+id/user_password_login"
+        android:layout_width="300dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:hint="@string/password_hint"
+        android:textSize="18dp"
+        android:layout_marginTop="20dp"
+        android:ems="10"
+        android:inputType="textPassword"/>
+    <Button
+        android:id="@+id/sign_in_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginTop="15dp"
+        android:text="@string/login_button_text"
+        android:textAllCaps="false"
+        />
 
-</android.support.design.widget.CoordinatorLayout>
+    <Button
+        android:id="@+id/create_account_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:text="@string/create_account_button_text"
+        android:textAllCaps="false"
+        />
+
+    <com.google.android.gms.common.SignInButton
+        android:id="@+id/sign_in_button_google"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginTop="15dp"
+        />
+
+</LinearLayout>

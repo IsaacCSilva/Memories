@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <EditText
+        android:id="@+id/user_email_create"
+        android:layout_width="300dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:hint="@string/login_hint"
+        android:textSize="18dp"
+        android:layout_marginTop="120dp"/>
+    <EditText
+        android:id="@+id/user_password_create"
+        android:layout_width="300dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:hint="@string/create_password"
+        android:textSize="18dp"
+        android:layout_marginTop="20dp"
+        android:ems="10"
+        android:inputType="textPassword"/>
+    <EditText
+        android:id="@+id/user_password_create2"
+        android:layout_width="300dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:hint="@string/create_password_2"
+        android:textSize="18dp"
+        android:layout_marginTop="20dp"
+        android:ems="10"
+        android:inputType="textPassword"/>
+    <Button
+        android:id="@+id/create_account_button_2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:text="@string/create_account_button_text"/>
+
+</LinearLayout>
