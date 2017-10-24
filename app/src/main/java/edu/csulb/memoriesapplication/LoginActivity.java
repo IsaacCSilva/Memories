@@ -68,6 +68,7 @@ View.OnClickListener{
                 if(user != null) {
                     Log.d(TAG, "onAuthStateChanged: signed_in" + user.getUid());
                     Intent intent = new Intent(LoginActivity.this, TrendingActivity.class);
+                    intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                     startActivity(intent);
                 } else {
                     Log.d(TAG, "onAuthStateChanged: signed_out");
@@ -131,7 +132,7 @@ View.OnClickListener{
                     @Override
                     public void onComplete(@NonNull Task<AuthResult> task) {
                         if(task.isSuccessful()) {
-                            Intent intent = new Intent(LoginActivity.this, CreateAccountActivity.class);
+                            Intent intent = new Intent(LoginActivity.this, TrendingActivity.class);
                             startActivity(intent);
                         } else {
 
