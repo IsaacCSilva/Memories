@@ -5,10 +5,13 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.util.Log;
+import android.view.Menu;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
@@ -30,6 +33,9 @@ public class CreateAccountActivity extends Activity implements View.OnClickListe
     private EditText userPassword;
     private EditText userPassword2;
     private Button createAccountButton;
+    private Pattern pattern;
+    private Matcher matcher;
+
     private final String TAG = "CreateAccountActivity";
 
     @Override
@@ -88,16 +94,17 @@ public class CreateAccountActivity extends Activity implements View.OnClickListe
     }
 
     private boolean passwordGuidelineCheck(String password) {
-        if(password.length() <= 6) {
-            printToast("Password length must be longer than 6");
+
+        pattern = Pattern.compile("^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=\\S+$).{7,}$");
+        matcher = pattern.matcher(password);
+        if(matcher.matches()){
+            return true;
         }
-        //TODO: figure out a algorithm to quickly check password strength
-        return true;
+        return false;
     }
 
     private void printToast(String message) {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
     }
-
 
 }
