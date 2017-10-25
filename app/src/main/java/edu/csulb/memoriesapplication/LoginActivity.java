@@ -66,10 +66,10 @@ View.OnClickListener{
             public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
                 FirebaseUser user = firebaseAuth.getCurrentUser();
                 if(user != null) {
-                    Log.d(TAG, "onAuthStateChanged: signed_in" + user.getUid());
+                    Log.d(TAG, "onAuthStateChanged: signed_in : " + user.getUid());
                     Intent intent = new Intent(LoginActivity.this, TrendingActivity.class);
-                    intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                     startActivity(intent);
+                    finish();
                 } else {
                     Log.d(TAG, "onAuthStateChanged: signed_out");
                 }
@@ -171,10 +171,6 @@ View.OnClickListener{
             public void onComplete(@NonNull Task<AuthResult> task) {
                 if(task.isSuccessful()) {
                     Log.d(TAG, "signInWithCredential:success");
-                    FirebaseUser user = mAuth.getCurrentUser();
-                    //TODO: Send user to new activity
-                    Intent intent = new Intent(LoginActivity.this, TrendingActivity.class);
-                    startActivity(intent);
                 } else {
                     Log.w(TAG, "signInWithCredential:failure", task.getException());
                     Toast.makeText(LoginActivity.this, "Authentication Failed.", Toast.LENGTH_SHORT).show();

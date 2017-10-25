@@ -5,6 +5,8 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.widget.TextView;
 
+import com.google.firebase.auth.FirebaseAuth;
+
 /**
  * Created by Danie on 10/16/2017.
  */
@@ -12,13 +14,13 @@ import android.widget.TextView;
 public class TrendingActivity extends Activity{
 
     private TextView text;
+    private FirebaseAuth mAuth;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_trending);
-        text = (TextView) this.findViewById(R.id.trending_text);
-        Intent intent = getIntent();
-        text.setText(intent.getStringExtra("EMAIL"));
+        mAuth = FirebaseAuth.getInstance();
+
     }
 }
