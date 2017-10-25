@@ -28,12 +28,18 @@ import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GoogleAuthProvider;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 public class LoginActivity extends AppCompatActivity implements GoogleApiClient.OnConnectionFailedListener,
 View.OnClickListener{
 
     private FirebaseAuth mAuth;
     private FirebaseAuth.AuthStateListener mAuthListener;
+    private FirebaseDatabase firebaseDatabase;
     private final String TAG = "LoginActivity";
     private GoogleApiClient googleApiClient;
     private EditText userEmail;
@@ -60,13 +66,32 @@ View.OnClickListener{
         userEmail = (EditText) findViewById(R.id.user_email_login);
         userPassword = (EditText) findViewById(R.id.user_password_login);
 
+        firebaseDatabase = FirebaseDatabase.getInstance();
+
         mAuth = FirebaseAuth.getInstance();
         mAuthListener = new FirebaseAuth.AuthStateListener() {
             @Override
             public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
-                FirebaseUser user = firebaseAuth.getCurrentUser();
-                if(user != null) {
-                    Log.d(TAG, "onAuthStateChanged: signed_in : " + user.getUid());
+                final FirebaseUser fUser = firebaseAuth.getCurrentUser();
+                if(fUser != null) {
+                    Log.d(TAG, "onAuthStateChanged: signed_in : " + fUser.getUid());
+                    final String userID = fUser.getUid();
+
+                    final DatabaseReference databaseReference = firebaseDatabase.getReference("Users");
+                    databaseReference.child(userID).addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(DataSnapshot dataSnapshot) {
+                            User user = dataSnapshot.getValue(User.class);
+                            if(user == null) {
+                                databaseReference.child(userID).setValue(new User(fUser.getEmail(), fUser.getDisplayName()));
+                            }
+                        }
+
+                        @Override
+                        public void onCancelled(DatabaseError databaseError) {
+
+                        }
+                    });
                     Intent intent = new Intent(LoginActivity.this, TrendingActivity.class);
                     startActivity(intent);
                     finish();
