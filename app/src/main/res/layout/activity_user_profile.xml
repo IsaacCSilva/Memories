@@ -51,7 +51,7 @@
                     android:id="@+id/user_profile_text"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="\@username"
+                    android:text="/@user ID"
                     android:textStyle="bold"
                     android:textColor="@android:color/white"/>
 
@@ -70,13 +70,13 @@
             <GridLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:columnCount="3"
+                android:columnCount="2"
                 android:rowCount="2"
                 android:padding="8dp">
 
                 <TextView
                     android:id="@+id/following_number"
-                    android:text="300"
+                    android:text="pH"
                     android:textColor="@android:color/white"
                     android:textStyle="bold"
                     android:layout_gravity="center"
@@ -85,21 +85,13 @@
 
                 <TextView
                     android:id="@+id/followers_number"
-                    android:text="200"
+                    android:text="pH"
                     android:textColor="@android:color/white"
                     android:textStyle="bold"
                     android:layout_gravity="center"
                     android:layout_marginLeft="8dp"
                     android:layout_marginRight="8dp"/>
 
-                <TextView
-                    android:id="@+id/likes_number"
-                    android:text="500"
-                    android:textColor="@android:color/white"
-                    android:textStyle="bold"
-                    android:layout_gravity="center"
-                    android:layout_marginLeft="8dp"
-                    android:layout_marginRight="8dp"/>
 
                 <TextView
                     android:id="@+id/following_text"
@@ -121,16 +113,6 @@
                     android:layout_marginLeft="8dp"
                     android:layout_marginRight="8dp"/>
 
-                <TextView
-                    android:id="@+id/likes_text"
-                    android:text="Likes"
-                    android:textColor="@android:color/white"
-                    android:textStyle="bold"
-                    android:textSize="18sp"
-                    android:layout_gravity="center"
-                    android:layout_marginLeft="8dp"
-                    android:layout_marginRight="8dp"/>
-
             </GridLayout>
 
         </LinearLayout>
@@ -144,19 +126,11 @@
             app:layout_scrollFlags="scroll|enterAlways">
 
             <TextView
-                android:id="@+id/title_text"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Title"
-                android:textSize="24sp"
-                android:textStyle="bold"/>
-            
-            <TextView
                 android:id="@+id/profile_information_text"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:text="text text text text text text text text text texttext text text text text text text text text text text text text text"/>
+                android:text="Introduction pH"/>
 
         </LinearLayout>
 

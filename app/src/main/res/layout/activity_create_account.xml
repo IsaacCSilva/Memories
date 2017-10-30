@@ -2,6 +2,25 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical" android:layout_width="match_parent"
     android:layout_height="match_parent">
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="100dp">
+        <EditText
+            android:id="@+id/fname_create_text"
+            android:layout_width="150dp"
+            android:layout_height="wrap_content"
+            android:textSize="15dp"
+            android:hint="@string/create_account_fname_hint"
+            android:layout_marginLeft="36dp"/>
+        <EditText
+            android:id="@+id/lname_create_text"
+            android:layout_width="150dp"
+            android:layout_height="wrap_content"
+            android:textSize="15dp"
+            android:hint="@string/create_account_lname_hint"/>
+    </LinearLayout>
     <EditText
         android:id="@+id/user_email_create"
         android:layout_width="300dp"
@@ -9,7 +28,7 @@
         android:layout_gravity="center"
         android:hint="@string/login_hint"
         android:textSize="18dp"
-        android:layout_marginTop="120dp"/>
+        android:layout_marginTop="10dp"/>
     <EditText
         android:id="@+id/user_password_create"
         android:layout_width="300dp"
@@ -17,7 +36,7 @@
         android:layout_gravity="center"
         android:hint="@string/create_password"
         android:textSize="18dp"
-        android:layout_marginTop="20dp"
+        android:layout_marginTop="10dp"
         android:ems="10"
         android:inputType="textPassword"/>
     <EditText
@@ -27,7 +46,7 @@
         android:layout_gravity="center"
         android:hint="@string/create_password_2"
         android:textSize="18dp"
-        android:layout_marginTop="20dp"
+        android:layout_marginTop="10dp"
         android:ems="10"
         android:inputType="textPassword"/>
     <Button
@@ -35,6 +54,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:text="@string/create_account_button_text"/>
+        android:text="@string/create_account_button_text"
+        android:layout_marginTop="10dp"/>
 
 </LinearLayout>

@@ -9,4 +9,10 @@
         android:layout_height="wrap_content"
         android:text="Trending"
         android:textSize="32dp"/>
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Send to user Page"
+        android:id="@+id/debug_userpage_button"/>
 </LinearLayout>

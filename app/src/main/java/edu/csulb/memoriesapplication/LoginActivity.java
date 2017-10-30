@@ -1,6 +1,7 @@
 package edu.csulb.memoriesapplication;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
@@ -23,9 +24,11 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.OptionalPendingResult;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.FirebaseException;
 import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseAuthInvalidUserException;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GoogleAuthProvider;
 import com.google.firebase.database.DataSnapshot;
@@ -35,63 +38,56 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 public class LoginActivity extends AppCompatActivity implements GoogleApiClient.OnConnectionFailedListener,
-View.OnClickListener{
+        View.OnClickListener {
 
     private FirebaseAuth mAuth;
     private FirebaseAuth.AuthStateListener mAuthListener;
     private FirebaseDatabase firebaseDatabase;
     private final String TAG = "LoginActivity";
+    private final String USER_INFO = "USER_INFO";
     private GoogleApiClient googleApiClient;
     private EditText userEmail;
     private EditText userPassword;
     private static final int RC_SIGN_IN = 9001;
 
-    /*
-    You can also get the user's email address with getEmail, the user's Google ID (for client-side use) with getId, and an ID token for the user with with getIdToken.
-    If you need to pass the currently signed-in user to a backend server, send the ID token to your backend server and validate the token on the server.
-     */
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
+        //Initialize all of the text and buttons
+        //------------------------------------------------------------------------------------------------------------
         SignInButton signInButtonGoogle = (SignInButton) findViewById(R.id.sign_in_button_google);
         signInButtonGoogle.setSize(SignInButton.SIZE_STANDARD);
         signInButtonGoogle.setOnClickListener(this);
-
         Button signInButton = (Button) findViewById(R.id.sign_in_button);
         signInButton.setOnClickListener(this);
-
+        Button createAccountButton = (Button) this.findViewById(R.id.create_account_button);
+        createAccountButton.setOnClickListener(this);
         userEmail = (EditText) findViewById(R.id.user_email_login);
         userPassword = (EditText) findViewById(R.id.user_password_login);
+        //------------------------------------------------------------------------------------------------------------
 
+        //Get Firebase instances and initialize GoogleSignInOptions and google's api client
+        //-----------------------------------------------------------------------------------------------------------
         firebaseDatabase = FirebaseDatabase.getInstance();
-
         mAuth = FirebaseAuth.getInstance();
+        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN).
+                requestIdToken(getString(R.string.default_web_client_id)).requestEmail().build();
+        googleApiClient = new GoogleApiClient.Builder(this).enableAutoManage(this, this).addApi(Auth.GOOGLE_SIGN_IN_API, gso).build();
+        //-----------------------------------------------------------------------------------------------------------
+
+
+        //State Listener, triggers everytime the user is signed in or signs out
         mAuthListener = new FirebaseAuth.AuthStateListener() {
+
             @Override
             public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
-                final FirebaseUser fUser = firebaseAuth.getCurrentUser();
-                if(fUser != null) {
+                FirebaseUser fUser = firebaseAuth.getCurrentUser();
+                if (fUser != null) {
                     Log.d(TAG, "onAuthStateChanged: signed_in : " + fUser.getUid());
-                    final String userID = fUser.getUid();
-
-                    final DatabaseReference databaseReference = firebaseDatabase.getReference("Users");
-                    databaseReference.child(userID).addListenerForSingleValueEvent(new ValueEventListener() {
-                        @Override
-                        public void onDataChange(DataSnapshot dataSnapshot) {
-                            User user = dataSnapshot.getValue(User.class);
-                            if(user == null) {
-                                databaseReference.child(userID).setValue(new User(fUser.getEmail(), fUser.getDisplayName()));
-                            }
-                        }
-
-                        @Override
-                        public void onCancelled(DatabaseError databaseError) {
-
-                        }
-                    });
+                    //User has successfully signed in, move to trending activity
                     Intent intent = new Intent(LoginActivity.this, TrendingActivity.class);
                     startActivity(intent);
                     finish();
@@ -101,27 +97,15 @@ View.OnClickListener{
             }
         };
 
-        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN).
-                requestIdToken(getString(R.string.default_web_client_id)).requestEmail().build();
-        googleApiClient = new GoogleApiClient.Builder(this).enableAutoManage(this,this).addApi(Auth.GOOGLE_SIGN_IN_API, gso).build();
-        Button createAccountButton = (Button) this.findViewById(R.id.create_account_button);
-        createAccountButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent createAccountIntent = new Intent(LoginActivity.this, CreateAccountActivity.class);
-                startActivity(createAccountIntent);
-            }
-        });
-
-
     }
+
 
     @Override
     protected void onStart() {
         super.onStart();
         mAuth.addAuthStateListener(mAuthListener);
         FirebaseUser currUser = mAuth.getCurrentUser();
-        if(currUser != null) {
+        if (currUser != null) {
             Intent intent = new Intent(this, TrendingActivity.class);
             startActivity(intent);
         }
@@ -130,14 +114,15 @@ View.OnClickListener{
     @Override
     protected void onStop() {
         super.onStop();
-        if(mAuthListener != null) {
+        if (mAuthListener != null) {
             mAuth.removeAuthStateListener(mAuthListener);
         }
     }
 
+    //Calls the appropriate methods depending on how the user wants to sign in
     @Override
     public void onClick(View view) {
-        switch(view.getId()) {
+        switch (view.getId()) {
             case R.id.sign_in_button_google: {
                 signInGoogle();
             }
@@ -145,32 +130,22 @@ View.OnClickListener{
             case R.id.sign_in_button: {
                 signIn();
             }
+            break;
+            case R.id.create_account_button: {
+                Intent createAccountIntent = new Intent(LoginActivity.this, CreateAccountActivity.class);
+                startActivity(createAccountIntent);
+            }
+            break;
         }
     }
 
-    private void signIn() {
-        String strUserEmail = userEmail.getText().toString();
-        String strUserPassword = userPassword.getText().toString();
-
-        mAuth.signInWithEmailAndPassword(strUserEmail, strUserPassword)
-                .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
-                    @Override
-                    public void onComplete(@NonNull Task<AuthResult> task) {
-                        if(task.isSuccessful()) {
-                            Intent intent = new Intent(LoginActivity.this, TrendingActivity.class);
-                            startActivity(intent);
-                        } else {
-
-                        }
-                    }
-                });
-    }
-
-    private void signInGoogle(){
+    //Attemps to retrieve info through google sign in
+    private void signInGoogle() {
         Intent signInIntent = Auth.GoogleSignInApi.getSignInIntent(googleApiClient);
         startActivityForResult(signInIntent, RC_SIGN_IN);
     }
 
+    //Retrieved info from google sign in
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -178,14 +153,15 @@ View.OnClickListener{
         // Result returned from launching the Intent from GoogleSignInApi.getSignInIntent(...);
         if (requestCode == RC_SIGN_IN) {
             GoogleSignInResult result = Auth.GoogleSignInApi.getSignInResultFromIntent(data);
-            if(result.isSuccess()) {
+            if (result.isSuccess()) {
                 GoogleSignInAccount account = result.getSignInAccount();
                 firebaseAuthWithGoogle(account);
             } else {
-
+                printToast("Unable to log in with google account.");
             }
         }
     }
+
 
     private void firebaseAuthWithGoogle(GoogleSignInAccount acct) {
         Log.d(TAG, "firebaseAuthWithGoogle:" + acct.getId());
@@ -194,20 +170,71 @@ View.OnClickListener{
         mAuth.signInWithCredential(credential).addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
             @Override
             public void onComplete(@NonNull Task<AuthResult> task) {
-                if(task.isSuccessful()) {
+                if (task.isSuccessful()) {
                     Log.d(TAG, "signInWithCredential:success");
+                    //Retrieves the user that just signed in
+                    final FirebaseUser fUser = mAuth.getCurrentUser();
+
+                    //Access the database and see if the user exists
+                    final DatabaseReference databaseReference = firebaseDatabase.getReference("Users");
+                    databaseReference.child(fUser.getUid()).addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(DataSnapshot dataSnapshot) {
+                            User user = dataSnapshot.getValue(User.class);
+                            //If User does not exist in our database, create an instance of them
+                            if (user == null) {
+                                databaseReference.child(fUser.getUid()).setValue(new User(fUser.getEmail(), fUser.getDisplayName()));
+                            }
+                        }
+
+                        @Override
+                        public void onCancelled(DatabaseError databaseError) {
+
+                        }
+                    });
+
                 } else {
                     Log.w(TAG, "signInWithCredential:failure", task.getException());
-                    Toast.makeText(LoginActivity.this, "Authentication Failed.", Toast.LENGTH_SHORT).show();
+                    printToast("Authentication Failed.");
                 }
             }
         });
     }
 
 
+    //Connection has failed, Log that the connection has failed from this activity
     @Override
     public void onConnectionFailed(ConnectionResult connectionResult) {
         Log.d(TAG, "onConnectionFailed:" + connectionResult);
+    }
+
+    //User has signed in with their email and password
+    private void signIn() {
+        String strUserEmail = userEmail.getText().toString();
+        String strUserPassword = userPassword.getText().toString();
+
+        if (strUserEmail.isEmpty()) {
+            printToast("User Email field is empty");
+        } else if (strUserPassword.isEmpty()) {
+            printToast("User Password field is empty");
+        } else {
+            mAuth.signInWithEmailAndPassword(strUserEmail, strUserPassword)
+                    .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
+                        @Override
+                        public void onComplete(@NonNull Task<AuthResult> task) {
+                            if (task.isSuccessful()) {
+
+                            } else {
+                                printToast("Account and password combination not found");
+                            }
+                        }
+                    });
+
+        }
+    }
+
+    private void printToast(String message) {
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
     }
 
 }

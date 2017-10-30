@@ -29,9 +29,7 @@ public class UserPageActivity extends Activity implements View.OnClickListener{
         setContentView(R.layout.activity_user_profile);
 
         mAuth = FirebaseAuth.getInstance();
-
         database = FirebaseDatabase.getInstance();
-
 
         userImage = (CircleImageView) this.findViewById(R.id.user_profile_picture);
         userImage.setOnClickListener(this);

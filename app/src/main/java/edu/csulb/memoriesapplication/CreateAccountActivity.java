@@ -12,7 +12,7 @@ import android.widget.EditText;
 import android.widget.Toast;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
+import java.util.UUID;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
@@ -21,6 +21,8 @@ import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException;
 import com.google.firebase.auth.FirebaseAuthUserCollisionException;
 import com.google.firebase.auth.FirebaseAuthWeakPasswordException;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 /**
  * Created by Danie on 10/16/2017.
@@ -32,6 +34,8 @@ public class CreateAccountActivity extends Activity implements View.OnClickListe
     private EditText userEmail;
     private EditText userPassword;
     private EditText userPassword2;
+    private EditText fName;
+    private EditText lName;
     private Button createAccountButton;
     private Pattern pattern;
     private Matcher matcher;
@@ -46,17 +50,27 @@ public class CreateAccountActivity extends Activity implements View.OnClickListe
         userEmail = (EditText) this.findViewById(R.id.user_email_create);
         userPassword = (EditText) this.findViewById(R.id.user_password_create);
         userPassword2 = (EditText) this.findViewById(R.id.user_password_create2);
+        fName = (EditText) this.findViewById(R.id.fname_create_text);
+        lName = (EditText) this.findViewById(R.id.lname_create_text);
         createAccountButton = (Button) this.findViewById(R.id.create_account_button_2);
         createAccountButton.setOnClickListener(this);
     }
 
     @Override
     public void onClick(View view) {
-        String userEmailCreate = userEmail.getText().toString();
-        String userPass = userPassword.getText().toString();
+        final String userEmailCreate = userEmail.getText().toString();
+        final String userPass = userPassword.getText().toString();
         String userPass2 = userPassword2.getText().toString();
+        final String userFirstName = fName.getText().toString();
+        final String userLastName = lName.getText().toString();
 
-        if(userEmailCreate.isEmpty()) {
+        if(userFirstName.isEmpty()){
+            printToast("First name line is empty");
+        }
+        else if(userLastName.isEmpty()) {
+            printToast("Last name line is empty");
+        }
+        else if(userEmailCreate.isEmpty()) {
             printToast("Email line is empty.");
         }
         else if(userPass.isEmpty() || userPass2.isEmpty()) {
@@ -72,11 +86,13 @@ public class CreateAccountActivity extends Activity implements View.OnClickListe
                 @Override
                 public void onComplete(@NonNull Task<AuthResult> task) {
                     if (task.isSuccessful()) {
-                        FirebaseUser user = mAuth.getCurrentUser();
-                        //TODO: need to send email or phone verification
-                        //TODO: Beef up security for this part
+                        DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference("Users");
+                        String userID = UUID.randomUUID().toString();
+                        databaseReference.child(userID).setValue(new User(userEmailCreate, userFirstName + " " + userLastName));
+
                         Intent intent = new Intent(CreateAccountActivity.this, TrendingActivity.class);
                         startActivity(intent);
+                        finish();
                     } else {
                         try {
                             throw task.getException();

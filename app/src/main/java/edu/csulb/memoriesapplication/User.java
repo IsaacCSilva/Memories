@@ -10,6 +10,10 @@ import com.google.firebase.database.IgnoreExtraProperties;
 public class User {
     public String email;
     public String name;
+    public String userIntro;
+    public String userID;
+    public int followersCount;
+    public int followingCount;
 
     public User() {
         //Default Constructor for specific write cases
@@ -18,5 +22,9 @@ public class User {
     public User(String userEmail, String userName) {
         email = userEmail;
         name = userName;
+        userID = userEmail;
+        userIntro = "";
+        followersCount = 0;
+        followingCount = 0;
     }
 }

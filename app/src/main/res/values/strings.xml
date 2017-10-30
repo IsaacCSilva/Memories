@@ -7,4 +7,6 @@
     <string name="create_account_button_text">Create an Account</string>
     <string name="create_password_2">Re-Enter Password</string>
     <string name="create_password">Password</string>
+    <string name="create_account_fname_hint">First Name</string>
+    <string name="create_account_lname_hint">Last Name</string>
 </resources>
