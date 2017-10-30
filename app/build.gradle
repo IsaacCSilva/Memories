@@ -2,7 +2,7 @@ apply plugin: 'com.android.application'
 
 android {
     compileSdkVersion 26
-    buildToolsVersion '26.0.2'
+    buildToolsVersion '27.0.0'
     defaultConfig {
         applicationId "edu.csulb.memoriesapplication"
         minSdkVersion 24
@@ -33,6 +33,8 @@ dependencies {
     compile 'com.android.support:design:26.1.0'
     compile 'de.hdodenhof:circleimageview:2.2.0'
     testCompile 'junit:junit:4.12'
+    compile 'com.android.support:cardview-v7:26.1.0'
+    compile 'com.android.support:recyclerview-v7:26.1.0'
 }
 
 
