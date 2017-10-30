@@ -13,8 +13,7 @@
 
         <RelativeLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            app:layout_scrollFlags="scroll|enterAlways">
+            android:layout_height="wrap_content">
 
             <ImageView
                 android:id="@+id/background_image"
@@ -79,7 +78,7 @@
                 android:padding="8dp">
 
                 <TextView
-                    android:id="@+id/following_number"
+                    android:id="@+id/placeholder_number"
                     android:text="pH"
                     android:textColor="@android:color/white"
                     android:textStyle="bold"
@@ -88,7 +87,7 @@
                     android:layout_marginRight="8dp"/>
 
                 <TextView
-                    android:id="@+id/followers_number"
+                    android:id="@+id/posts_number"
                     android:text="pH"
                     android:textColor="@android:color/white"
                     android:textStyle="bold"
@@ -98,8 +97,8 @@
 
 
                 <TextView
-                    android:id="@+id/following_text"
-                    android:text="Following"
+                    android:id="@+id/placeholder_text"
+                    android:text="/??????"
                     android:textColor="@android:color/white"
                     android:textStyle="bold"
                     android:textSize="18sp"
@@ -108,8 +107,8 @@
                     android:layout_marginRight="8dp"/>
 
                 <TextView
-                    android:id="@+id/followers_text"
-                    android:text="Followers"
+                    android:id="@+id/posts_text"
+                    android:text="Posts"
                     android:textColor="@android:color/white"
                     android:textStyle="bold"
                     android:textSize="18sp"
