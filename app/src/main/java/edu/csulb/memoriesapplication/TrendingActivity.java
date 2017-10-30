@@ -25,6 +25,7 @@ public class TrendingActivity extends Activity implements View.OnClickListener{
         setContentView(R.layout.activity_trending);
 
         button = (Button) findViewById(R.id.debug_userpage_button);
+        button.setOnClickListener(this);
         mAuth = FirebaseAuth.getInstance();
 
     }
