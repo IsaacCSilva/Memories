@@ -12,8 +12,6 @@ public class User {
     public String name;
     public String userIntro;
     public String userID;
-    public int followersCount;
-    public int followingCount;
 
     public User() {
         //Default Constructor for specific write cases
@@ -24,7 +22,5 @@ public class User {
         name = userName;
         userID = userEmail;
         userIntro = "";
-        followersCount = 0;
-        followingCount = 0;
     }
 }

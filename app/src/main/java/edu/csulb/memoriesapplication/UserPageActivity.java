@@ -55,8 +55,6 @@ public class UserPageActivity extends Activity implements View.OnClickListener {
 
         SharedPreferences sharedPreferences = getSharedPreferences(USER_SETTINGS, 0);
         readPermissionGranted = sharedPreferences.getBoolean(READ_PERMISSION, false);
-
-
     }
 
     //Ask the user if we are able to store a picture with their permission during runtime

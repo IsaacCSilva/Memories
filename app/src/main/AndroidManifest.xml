@@ -29,7 +29,8 @@
 
         </activity>
 
-        <activity android:name=".UserPageActivity">
+        <activity android:name=".UserPageActivity"
+            android:theme="@style/AppTheme.AppBarOverlay">
 
         </activity>
     </application>
