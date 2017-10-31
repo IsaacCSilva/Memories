@@ -2,30 +2,27 @@ package edu.csulb.memoriesapplication;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.util.Log;
-import android.view.Menu;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.UUID;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException;
 import com.google.firebase.auth.FirebaseAuthUserCollisionException;
-import com.google.firebase.auth.FirebaseAuthWeakPasswordException;
-import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
 /**
- * Created by Danie on 10/16/2017.
+ * Created by Daniel on 10/16/2017.
  */
 
 public class CreateAccountActivity extends Activity implements View.OnClickListener{
@@ -39,8 +36,8 @@ public class CreateAccountActivity extends Activity implements View.OnClickListe
     private Button createAccountButton;
     private Pattern pattern;
     private Matcher matcher;
-
     private final String TAG = "CreateAccountActivity";
+    private final String USER_INFO  = "user_info";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -86,10 +83,17 @@ public class CreateAccountActivity extends Activity implements View.OnClickListe
                 @Override
                 public void onComplete(@NonNull Task<AuthResult> task) {
                     if (task.isSuccessful()) {
+                        //Create an instance of the user in the database to hold their user information
                         DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference("Users");
-                        String userID = UUID.randomUUID().toString();
+                        String userID = mAuth.getCurrentUser().getUid();
                         databaseReference.child(userID).setValue(new User(userEmailCreate, userFirstName + " " + userLastName));
 
+                        //Log that the user has signed in using this device
+                        SharedPreferences sharedPreferences = getSharedPreferences(USER_INFO, 0);
+                        SharedPreferences.Editor editor = sharedPreferences.edit();
+                        editor.putBoolean(userID, true);
+
+                        //Start trending activity
                         Intent intent = new Intent(CreateAccountActivity.this, TrendingActivity.class);
                         startActivity(intent);
                         finish();

@@ -1,7 +1,9 @@
 package edu.csulb.memoriesapplication;
 
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.media.Image;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
@@ -23,6 +25,8 @@ import com.google.android.gms.common.SignInButton;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.OptionalPendingResult;
 import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.FirebaseException;
 import com.google.firebase.auth.AuthCredential;
@@ -36,6 +40,13 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 
 public class LoginActivity extends AppCompatActivity implements GoogleApiClient.OnConnectionFailedListener,
         View.OnClickListener {
@@ -43,8 +54,9 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
     private FirebaseAuth mAuth;
     private FirebaseAuth.AuthStateListener mAuthListener;
     private FirebaseDatabase firebaseDatabase;
+    private FirebaseStorage firebaseStorage;
     private final String TAG = "LoginActivity";
-    private final String USER_INFO = "USER_INFO";
+    private final String USER_INFO = "user_info";
     private GoogleApiClient googleApiClient;
     private EditText userEmail;
     private EditText userPassword;
@@ -76,6 +88,7 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN).
                 requestIdToken(getString(R.string.default_web_client_id)).requestEmail().build();
         googleApiClient = new GoogleApiClient.Builder(this).enableAutoManage(this, this).addApi(Auth.GOOGLE_SIGN_IN_API, gso).build();
+        firebaseStorage = FirebaseStorage.getInstance();
         //-----------------------------------------------------------------------------------------------------------
 
 
@@ -165,15 +178,14 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
 
     private void firebaseAuthWithGoogle(GoogleSignInAccount acct) {
         Log.d(TAG, "firebaseAuthWithGoogle:" + acct.getId());
-
+        final FirebaseUser fUser = mAuth.getCurrentUser();
         AuthCredential credential = GoogleAuthProvider.getCredential(acct.getIdToken(), null);
+
         mAuth.signInWithCredential(credential).addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
             @Override
             public void onComplete(@NonNull Task<AuthResult> task) {
                 if (task.isSuccessful()) {
                     Log.d(TAG, "signInWithCredential:success");
-                    //Retrieves the user that just signed in
-                    final FirebaseUser fUser = mAuth.getCurrentUser();
 
                     //Access the database and see if the user exists
                     final DatabaseReference databaseReference = firebaseDatabase.getReference("Users");
@@ -184,6 +196,19 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
                             //If User does not exist in our database, create an instance of them
                             if (user == null) {
                                 databaseReference.child(fUser.getUid()).setValue(new User(fUser.getEmail(), fUser.getDisplayName()));
+                                //Log that the user has logged in using this device
+                                SharedPreferences sharedPreferences = getSharedPreferences(USER_INFO, 0);
+                                SharedPreferences.Editor editor = sharedPreferences.edit();
+                                editor.putBoolean(fUser.getUid(), true);
+                            } else {
+                                //User account already exists, check if they have signed in using this phone before
+                                SharedPreferences sharedPreferences = getSharedPreferences(USER_INFO, 0);
+                                boolean containsUserData = sharedPreferences.getBoolean(fUser.getUid(), false);
+
+                                //The user has never signed in with this phone before, pull in information from database
+                                if (!containsUserData) {
+
+                                }
                             }
                         }
 

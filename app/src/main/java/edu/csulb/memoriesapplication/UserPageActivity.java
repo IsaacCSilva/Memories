@@ -3,12 +3,16 @@ package edu.csulb.memoriesapplication;
 import android.*;
 import android.Manifest;
 import android.app.Activity;
+import android.content.Context;
+import android.content.ContextWrapper;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.media.Image;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -22,6 +26,12 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+
 import de.hdodenhof.circleimageview.CircleImageView;
 
 /**
@@ -32,16 +42,19 @@ public class UserPageActivity extends Activity implements View.OnClickListener {
 
     FirebaseAuth mAuth;
     FirebaseDatabase database;
-    private final int RESULT_LOAD_IMAGE = 1;
+    private final int RESULT_LOAD_PROFILE_PIC = 1;
     DatabaseReference databaseReference;
     final String TAG = "UserPageActivity";
+    String userProfileFileName;
+    File userImagePath;
+    final String USER_IMAGES_FOLDER  = "user_images";
     final int REQUEST_CODE = 1052;
     private final String USER_SETTINGS = "User Settings";
     private final String READ_PERMISSION = "Read_external_storage_permission_granted";
     private boolean readPermissionGranted;
     private CircleImageView userImage;
 
-    //TODO: store the picture in internal storage and also in the database in case they log in through a different computer
+    //TODO: store the picture in internal storage and also in the database in case they log in through a different device
     @Override
     protected void onCreate(Bundle onSavedInstanceState) {
         super.onCreate(onSavedInstanceState);
@@ -50,8 +63,22 @@ public class UserPageActivity extends Activity implements View.OnClickListener {
         mAuth = FirebaseAuth.getInstance();
         database = FirebaseDatabase.getInstance();
 
+        ContextWrapper contextWrapper = new ContextWrapper(getApplicationContext());
+        userImagePath = contextWrapper.getDir(USER_IMAGES_FOLDER, Context.MODE_PRIVATE);
+        userProfileFileName = "profile_pic_" + mAuth.getCurrentUser().getUid() + ".png";
+
         userImage = (CircleImageView) this.findViewById(R.id.user_profile_picture);
         userImage.setOnClickListener(this);
+        //Check if user image profile exists
+        File userProfileFile = new File(userImagePath, userProfileFileName);
+        if(userProfileFile.exists()) {
+            try {
+                Bitmap userProfilePicture = BitmapFactory.decodeStream(new FileInputStream(userProfileFile));
+                userImage.setImageBitmap(userProfilePicture);
+            }catch(FileNotFoundException exception) {
+                exception.printStackTrace();
+            }
+        }
 
         SharedPreferences sharedPreferences = getSharedPreferences(USER_SETTINGS, 0);
         readPermissionGranted = sharedPreferences.getBoolean(READ_PERMISSION, false);
@@ -89,7 +116,7 @@ public class UserPageActivity extends Activity implements View.OnClickListener {
                     checkPermissions();
                 } else {
                     Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-                    startActivityForResult(intent, RESULT_LOAD_IMAGE);
+                    startActivityForResult(intent, RESULT_LOAD_PROFILE_PIC);
                 }
             }
             break;
@@ -99,7 +126,7 @@ public class UserPageActivity extends Activity implements View.OnClickListener {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == RESULT_LOAD_IMAGE && resultCode == RESULT_OK && data != null) {
+        if (requestCode == RESULT_LOAD_PROFILE_PIC && resultCode == RESULT_OK && data != null) {
             Log.d(TAG, "Inside on Activity Result");
             Uri selectedImage = data.getData();
             String[] filePath = {MediaStore.Images.Media.DATA};
@@ -107,8 +134,23 @@ public class UserPageActivity extends Activity implements View.OnClickListener {
             cursor.moveToFirst();
             int columnIndex = cursor.getColumnIndex(filePath[0]);
             String picturePath = cursor.getString(columnIndex);
+            Bitmap userProfileImage = BitmapFactory.decodeFile(picturePath);
             cursor.close();
-            userImage.setImageBitmap(BitmapFactory.decodeFile(picturePath));
+
+            String userId = mAuth.getCurrentUser().getUid();
+            File imagePath = new File(userImagePath, userProfileFileName);
+
+            try{
+                FileOutputStream fileOutputStream = new FileOutputStream(imagePath);
+                userProfileImage.compress(Bitmap.CompressFormat.PNG, 100, fileOutputStream);
+                userImage.setImageBitmap(userProfileImage);
+                fileOutputStream.close();
+            }catch(FileNotFoundException exception) {
+                exception.printStackTrace();
+            }catch(IOException exception) {
+                exception.printStackTrace();
+            }
+            //TODO: store the image you just received into firebase storage
         }
     }
 }
