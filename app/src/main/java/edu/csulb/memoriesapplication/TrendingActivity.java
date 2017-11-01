@@ -53,6 +53,8 @@ public class TrendingActivity extends Activity implements View.OnClickListener{
         Polaroid polaroid = new Polaroid(uri, null);
 
         polaroids.add(polaroid);
+        uri = Uri.parse("http://i646.photobucket.com/albums/uu187/jess_roces/animal11.jpg");
+        polaroid = new Polaroid(null, uri);
         polaroids.add(polaroid);
 
     }

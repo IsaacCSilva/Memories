@@ -13,6 +13,8 @@ import android.widget.MediaController;
 import android.widget.RelativeLayout;
 import android.widget.VideoView;
 
+import com.bumptech.glide.Glide;
+
 import java.util.List;
 
 /**
@@ -80,6 +82,11 @@ public class CardViewAdapter extends RecyclerView.Adapter<CardViewAdapter.CardVi
 
         if(polaroid.getImageUri() != null){
             //load image from Uri
+            ImageView imageView = new ImageView(context, null);
+            Glide.with(context)
+                    .load(polaroid.getImageUri().toString())
+                    .into(imageView);
+            cardView.addView(imageView);
 
         }
         else if(polaroid.getVideoUri() != null){
