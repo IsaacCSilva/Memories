@@ -178,12 +178,12 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
 
     private void firebaseAuthWithGoogle(GoogleSignInAccount acct) {
         Log.d(TAG, "firebaseAuthWithGoogle:" + acct.getId());
-        final FirebaseUser fUser = mAuth.getCurrentUser();
         AuthCredential credential = GoogleAuthProvider.getCredential(acct.getIdToken(), null);
 
         mAuth.signInWithCredential(credential).addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
             @Override
             public void onComplete(@NonNull Task<AuthResult> task) {
+                final FirebaseUser fUser = mAuth.getCurrentUser();
                 if (task.isSuccessful()) {
                     Log.d(TAG, "signInWithCredential:success");
 
@@ -204,6 +204,7 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
                                 //User account already exists, check if they have signed in using this phone before
                                 SharedPreferences sharedPreferences = getSharedPreferences(USER_INFO, 0);
                                 boolean containsUserData = sharedPreferences.getBoolean(fUser.getUid(), false);
+
 
                                 //The user has never signed in with this phone before, pull in information from database
                                 if (!containsUserData) {

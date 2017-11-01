@@ -25,6 +25,7 @@ import android.view.View;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.storage.FirebaseStorage;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -44,6 +45,7 @@ public class UserPageActivity extends Activity implements View.OnClickListener {
     FirebaseDatabase database;
     private final int RESULT_LOAD_PROFILE_PIC = 1;
     DatabaseReference databaseReference;
+    private FirebaseStorage firebaseStorage;
     final String TAG = "UserPageActivity";
     String userProfileFileName;
     File userImagePath;
@@ -54,7 +56,6 @@ public class UserPageActivity extends Activity implements View.OnClickListener {
     private boolean readPermissionGranted;
     private CircleImageView userImage;
 
-    //TODO: store the picture in internal storage and also in the database in case they log in through a different device
     @Override
     protected void onCreate(Bundle onSavedInstanceState) {
         super.onCreate(onSavedInstanceState);
@@ -62,6 +63,7 @@ public class UserPageActivity extends Activity implements View.OnClickListener {
 
         mAuth = FirebaseAuth.getInstance();
         database = FirebaseDatabase.getInstance();
+        firebaseStorage = FirebaseStorage.getInstance();
 
         ContextWrapper contextWrapper = new ContextWrapper(getApplicationContext());
         userImagePath = contextWrapper.getDir(USER_IMAGES_FOLDER, Context.MODE_PRIVATE);
@@ -151,6 +153,7 @@ public class UserPageActivity extends Activity implements View.OnClickListener {
                 exception.printStackTrace();
             }
             //TODO: store the image you just received into firebase storage
+
         }
     }
 }
