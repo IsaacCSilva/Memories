@@ -32,6 +32,10 @@
         <activity android:name=".UserPageActivity">
 
         </activity>
+
+        <service android:name=".UserService">
+
+        </service>
     </application>
 
 </manifest>
