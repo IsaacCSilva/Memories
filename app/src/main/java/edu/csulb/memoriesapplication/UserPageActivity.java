@@ -21,12 +21,21 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.view.View;
+import android.widget.TextView;
 
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -55,6 +64,10 @@ public class UserPageActivity extends Activity implements View.OnClickListener {
     private final String READ_PERMISSION = "Read_external_storage_permission_granted";
     private boolean readPermissionGranted;
     private CircleImageView userImage;
+    private TextView postsCountText;
+    private TextView profileInformationTextView;
+    private TextView userNameTextView;
+    private TextView userIdTextView;
 
     @Override
     protected void onCreate(Bundle onSavedInstanceState) {
@@ -84,6 +97,18 @@ public class UserPageActivity extends Activity implements View.OnClickListener {
 
         SharedPreferences sharedPreferences = getSharedPreferences(USER_SETTINGS, 0);
         readPermissionGranted = sharedPreferences.getBoolean(READ_PERMISSION, false);
+
+        postsCountText = (TextView) this.findViewById(R.id.posts_count_text);
+        profileInformationTextView = (TextView) this.findViewById(R.id.profile_information_text);
+        userNameTextView = (TextView) this.findViewById(R.id.user_name_text);
+        userIdTextView = (TextView) this.findViewById(R.id.user_id_text);
+
+
+        loadUser();
+    }
+
+    private void loadUser() {
+        //Load in info from internal storage after login finishes it's service
     }
 
     //Ask the user if we are able to store a picture with their permission during runtime
@@ -99,13 +124,13 @@ public class UserPageActivity extends Activity implements View.OnClickListener {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         switch (requestCode) {
             case REQUEST_CODE: {
-                if (grantResults.length > 0) {
-                    readPermissionGranted = true;
-                    SharedPreferences sharedPreferences = getSharedPreferences(USER_SETTINGS, 0);
-                    SharedPreferences.Editor userSettings = sharedPreferences.edit();
-                    userSettings.putBoolean(READ_PERMISSION, true);
-                    userSettings.commit();
-                }
+                    if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                        readPermissionGranted = true;
+                        SharedPreferences sharedPreferences = getSharedPreferences(USER_SETTINGS, 0);
+                        SharedPreferences.Editor userSettings = sharedPreferences.edit();
+                        userSettings.putBoolean(READ_PERMISSION, true);
+                        userSettings.commit();
+                    }
             }
         }
     }
@@ -152,8 +177,27 @@ public class UserPageActivity extends Activity implements View.OnClickListener {
             }catch(IOException exception) {
                 exception.printStackTrace();
             }
-            //TODO: store the image you just received into firebase storage
+            StorageReference storageReference = firebaseStorage.getReference()
+                    .child("user_images/user_profile_" + mAuth.getCurrentUser().getUid() + ".png");
+            userImage.setDrawingCacheEnabled(true);
+            userImage.buildDrawingCache();
+            Bitmap bitmapCache = userImage.getDrawingCache();
+            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+            bitmapCache.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream);
+            byte[] outputData = byteArrayOutputStream.toByteArray();
 
+            UploadTask uploadTask = storageReference.putBytes(outputData);
+            uploadTask.addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                @Override
+                public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+
+                }
+            }).addOnFailureListener(new OnFailureListener() {
+                @Override
+                public void onFailure(@NonNull Exception e) {
+                    e.printStackTrace();
+                }
+            });
         }
     }
 }

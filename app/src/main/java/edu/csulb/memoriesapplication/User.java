@@ -12,6 +12,7 @@ public class User {
     public String name;
     public String userIntro;
     public String userID;
+    public int userPostsCount;
 
     public User() {
         //Default Constructor for specific write cases
@@ -22,5 +23,6 @@ public class User {
         name = userName;
         userID = userEmail;
         userIntro = "";
+        userPostsCount = 0;
     }
 }

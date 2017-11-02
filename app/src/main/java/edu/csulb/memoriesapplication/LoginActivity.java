@@ -1,8 +1,11 @@
 package edu.csulb.memoriesapplication;
 
 import android.content.Context;
+import android.content.ContextWrapper;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.media.Image;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -43,6 +46,7 @@ import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -61,7 +65,7 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
     private EditText userEmail;
     private EditText userPassword;
     private static final int RC_SIGN_IN = 9001;
-
+    final String USER_IMAGES_FOLDER  = "user_images";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -208,7 +212,34 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
 
                                 //The user has never signed in with this phone before, pull in information from database
                                 if (!containsUserData) {
-
+                                    StorageReference storageReference = firebaseStorage.getReference();
+                                    storageReference = storageReference.child("user_images/user_profile_" +
+                                            mAuth.getCurrentUser().getUid() + ".png");
+                                    final long TEN_MEGABYTES = 1024*1024 * 10;
+                                    storageReference.getBytes(TEN_MEGABYTES).addOnSuccessListener(new OnSuccessListener<byte[]>() {
+                                        @Override
+                                        public void onSuccess(byte[] bytes) {
+                                            ContextWrapper contextWrapper = new ContextWrapper(getApplicationContext());
+                                            File userImagePath = contextWrapper.getDir(USER_IMAGES_FOLDER, Context.MODE_PRIVATE);
+                                            String userProfileFileName = "profile_pic_" + mAuth.getCurrentUser().getUid() + ".png";
+                                            File userProfileFile = new File(userImagePath, userProfileFileName);
+                                            try {
+                                                FileOutputStream fileOutputStream = new FileOutputStream(userProfileFile);
+                                                Bitmap bitmapImage = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+                                                bitmapImage.compress(Bitmap.CompressFormat.PNG, 100, fileOutputStream);
+                                                fileOutputStream.close();
+                                            }catch(FileNotFoundException exception) {
+                                                exception.printStackTrace();
+                                            }catch(IOException exception) {
+                                                exception.printStackTrace();
+                                            }
+                                        }
+                                    }).addOnFailureListener(new OnFailureListener() {
+                                        @Override
+                                        public void onFailure(@NonNull Exception e) {
+                                            e.printStackTrace();
+                                        }
+                                    });
                                 }
                             }
                         }
@@ -255,7 +286,6 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
                             }
                         }
                     });
-
         }
     }
 

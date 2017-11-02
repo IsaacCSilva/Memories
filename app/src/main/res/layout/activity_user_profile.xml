@@ -23,6 +23,28 @@
                 android:scaleType="centerCrop"
                 android:contentDescription="" />
 
+            <TextView
+                android:id="@+id/posts_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentRight="true"
+                android:text="@string/post_count_text"
+                android:textSize="20dp"
+                android:textColor="@android:color/white"
+                android:layout_marginRight="25dp"
+                android:textStyle="bold"
+                />
+            <TextView
+                android:id="@+id/posts_count_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentRight="true"
+                android:layout_below="@+id/posts_text"
+                android:layout_marginRight="40dp"
+                android:text="pH"
+                android:textColor="@android:color/white"
+                android:textSize="15dp"/>
+
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -51,7 +73,7 @@
                     android:textStyle="bold" />
 
                 <TextView
-                    android:id="@+id/user_profile_text"
+                    android:id="@+id/user_id_text"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="/@user ID"
@@ -70,53 +92,6 @@
             android:gravity="center"
             app:layout_scrollFlags="scroll|enterAlways">
 
-            <GridLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:columnCount="2"
-                android:rowCount="2"
-                android:padding="8dp">
-
-                <TextView
-                    android:id="@+id/placeholder_number"
-                    android:text="pH"
-                    android:textColor="@android:color/white"
-                    android:textStyle="bold"
-                    android:layout_gravity="center"
-                    android:layout_marginLeft="8dp"
-                    android:layout_marginRight="8dp"/>
-
-                <TextView
-                    android:id="@+id/posts_number"
-                    android:text="pH"
-                    android:textColor="@android:color/white"
-                    android:textStyle="bold"
-                    android:layout_gravity="center"
-                    android:layout_marginLeft="8dp"
-                    android:layout_marginRight="8dp"/>
-
-
-                <TextView
-                    android:id="@+id/placeholder_text"
-                    android:text="/??????"
-                    android:textColor="@android:color/white"
-                    android:textStyle="bold"
-                    android:textSize="18sp"
-                    android:layout_gravity="center"
-                    android:layout_marginLeft="8dp"
-                    android:layout_marginRight="8dp"/>
-
-                <TextView
-                    android:id="@+id/posts_text"
-                    android:text="Posts"
-                    android:textColor="@android:color/white"
-                    android:textStyle="bold"
-                    android:textSize="18sp"
-                    android:layout_gravity="center"
-                    android:layout_marginLeft="8dp"
-                    android:layout_marginRight="8dp"/>
-
-            </GridLayout>
 
         </LinearLayout>
         
