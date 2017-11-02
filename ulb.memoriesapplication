@@ -1,0 +1,137 @@
+[33mcommit c9f2af574e1025fbc7d3b7a5bca40a1fc790f2aa[m
+Author: Daniel <danielkimstudent@hotmail.com>
+Date:   Wed Nov 1 17:34:34 2017 -0700
+
+    allowed the application to store and save all of the user info and automatically implement changes to the saved data in the server. However, I am planning to change the area in which those actions occur and put them into the service in the next commit to decrease the lag in which the user's data is queried in
+
+[33mcommit 05cc2b1e15c720153c3c3a7d13851839265ac53f[m
+Author: Francisco Fierro <f.a.fierrojr@gmail.com>
+Date:   Wed Nov 1 12:45:03 2017 -0700
+
+    Imported Glide library to get images working in Trending page.
+
+[33mcommit f3d62f11a0579d321a46a4c03078547e66c3053f[m
+Author: Daniel <danielkimstudent@hotmail.com>
+Date:   Wed Nov 1 12:24:55 2017 -0700
+
+    Minor bug fixes to user page activity and login activity
+
+[33mcommit c624d131db5a9b243a883e6c3b891267303b8bb1[m
+Author: Daniel Kim <danielkimstudent@hotmail.com>
+Date:   Tue Oct 31 16:50:27 2017 -0700
+
+    Added support for fire storage and also added support for the application to log users into the shared preferences and the application's internal storage. There are still alot of bugs that I need to fix. Needed to push it upstream to work at school.
+
+[33mcommit 4440b0fb40d703379997abf9e41c74bb66435b88[m
+Author: Daniel <danielkimstudent@hotmail.com>
+Date:   Mon Oct 30 22:29:43 2017 -0700
+
+    minor changes to the manifest and user page activity
+
+[33mcommit d7ddcfbb96870809dc38df76ce29ba1cee5d8a35[m
+Author: Daniel Kim <danielkimstudent@hotmail.com>
+Date:   Sun Oct 29 22:21:54 2017 -0700
+
+    further adjustments to fix User Page XML bugs and now users are able to upload their pictures onto the application, but it will not be saved. Need to work on that.
+
+[33mcommit 6c03fbf62e65ba7f3d56494f61da901f10f5a539[m
+Author: Francisco Fierro <f.a.fierrojr@gmail.com>
+Date:   Sun Oct 29 21:10:55 2017 -0700
+
+    Added Polaroid and CardViewAdapter classes for displaying polaroids in a recyclerview. Added recycler view to trending page xml and sample code in trending page.
+
+[33mcommit a9a3e11c9fd1db966969d16e242ff8f22f041e2b[m
+Author: Daniel Kim <danielkimstudent@hotmail.com>
+Date:   Sun Oct 29 20:14:17 2017 -0700
+
+    Bug fixes to XML file for user profile with over-sized file picture and minor bug fixes to TrendingActivity and UserPageActivity.
+    Also added a permission to the manifest to allow the use of external storage files.
+
+[33mcommit 70638a7b6f827c59842b0a64d0b407ba7a712c5a[m
+Author: Daniel Kim <danielkimstudent@hotmail.com>
+Date:   Sun Oct 29 17:26:57 2017 -0700
+
+    In CreateAccountActivity, edited to create a proper user profile with their first name and last name also including
+    other side information such as their follower count. This is not final, it is a place holder for their information format.
+    
+    Login Activity also improved to display proper error messages such as the database not findind the proper combination to the
+    user info.
+    
+    TrendingActivity and its associated xml file changed to implement a button to start the UserPageActivity.
+    
+    User class built in order to build a proper template for the user's information.
+
+[33mcommit eabf5641935f9a3c83aafea984e3cec6ea1052c7[m
+Author: Daniel <danielkimstudent@hotmail.com>
+Date:   Wed Oct 25 14:58:27 2017 -0700
+
+    Added firebase querrying and user profile creation
+
+[33mcommit c6510e652d2172fbbbddf1370c02c14d24727540[m
+Author: unknown <ics0317@yahoo.com>
+Date:   Wed Oct 25 11:45:05 2017 -0700
+
+    Added notification pictures
+
+[33mcommit b0c56cedcb715653f3f6e1ef1c2abd08096aa705[m
+Author: Daniel <danielkimstudent@hotmail.com>
+Date:   Wed Oct 25 11:42:05 2017 -0700
+
+    Minor security changes
+
+[33mcommit e4f69dfc48040819998f0b57ff54d0137e83d5d2[m
+Author: Daniel Kim <danielkimstudent@hotmail.com>
+Date:   Tue Oct 24 18:49:37 2017 -0700
+
+    Minor bug fixes and Login Activity removed from back stack once users sign in successfully and improved the way we connect to the user on Trending Activity.
+
+[33mcommit e6ff0e199f07f463fab694811ace5e42f12598a4[m
+Author: Daniel <danielkimstudent@hotmail.com>
+Date:   Tue Oct 24 16:32:33 2017 -0700
+
+    Changes in back stack to Login Activity so that the user cannot move back to the login screen once they login.  Need to continue testing, however
+
+[33mcommit d4506c0a0ea0589138df2c3483050caf2db3ab99[m
+Author: Brian <brianlee1218@gmail.com>
+Date:   Tue Oct 24 12:26:02 2017 -0700
+
+    Fix bad repo
+
+[33mcommit f0d90235a4387549d075039ab7236f3d5d35eaa7[m
+Author: Daniel <danielkimstudent@hotmail.com>
+Date:   Mon Oct 23 13:13:30 2017 -0700
+
+    Pushed up changes for the login and create account activities, users should now be able to create and sign in with their custom accounts
+
+[33mcommit 1440efed122964aa9c7a76fa6d4ab2e3e89f1854[m
+Author: Daniel Kim <danielkimstudent@hotmail.com>
+Date:   Mon Oct 23 00:03:13 2017 -0700
+
+    Made changes to login activity to support creation of an account
+
+[33mcommit 202836164b36f68c28aff54e1800ebc6bdf63cc3[m
+Author: Daniel Kim <danielkimstudent@hotmail.com>
+Date:   Wed Oct 18 20:23:19 2017 -0700
+
+    Google Sign in Api, It looks pretty bare bone but it works.
+    It logs the user out right after because of inactivity
+    Also connected to Firebase with Sha-1 from my Doc
+    Need to update the UI for the Log In Screen and create a way for users to create an account.
+
+[33mcommit f0aee50870e1347c347e13d839e0c51cb0fe790c[m
+Author: Daniel <danielkimstudent@hotmail.com>
+Date:   Mon Oct 16 13:07:11 2017 -0700
+
+    Created the skeleton of the project with all of the necessary activity screens
+
+[33mcommit bb5e1b8db7af31e5535f1dbd18d386fbfe7d8f56[m
+Author: Daniel Kim <danielkimstudent@hotmail.com>
+Date:   Thu Oct 12 18:10:41 2017 -0700
+
+    First Skeleton of the Project
+
+[33mcommit ed5dd37f15feedb724a5dcec7b9a7f6a7c6d44c8[m
+Author: Se Un Kim <danielkimstudent@hotmail.com>
+Date:   Thu Oct 12 17:57:58 2017 -0700
+
+    Initial commit
