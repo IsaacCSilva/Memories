@@ -1,12 +1,20 @@
 package edu.csulb.memoriesapplication;
 
+import android.content.Context;
+import android.content.ContextWrapper;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.media.Image;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -18,11 +26,16 @@ import com.google.android.gms.auth.api.signin.GoogleSignInResult;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.SignInButton;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.OptionalPendingResult;
 import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.FirebaseException;
 import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseAuthInvalidUserException;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GoogleAuthProvider;
 import com.google.firebase.database.DataSnapshot;
@@ -30,6 +43,14 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 
 public class LoginActivity extends AppCompatActivity implements GoogleApiClient.OnConnectionFailedListener,
         View.OnClickListener {
@@ -37,12 +58,14 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
     private FirebaseAuth mAuth;
     private FirebaseAuth.AuthStateListener mAuthListener;
     private FirebaseDatabase firebaseDatabase;
+    private FirebaseStorage firebaseStorage;
     private final String TAG = "LoginActivity";
     private final String USER_INFO = "user_info";
     private GoogleApiClient googleApiClient;
     private EditText userEmail;
     private EditText userPassword;
     private static final int RC_SIGN_IN = 9001;
+    final String USER_IMAGES_FOLDER  = "user_images";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,6 +92,7 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN).
                 requestIdToken(getString(R.string.default_web_client_id)).requestEmail().build();
         googleApiClient = new GoogleApiClient.Builder(this).enableAutoManage(this, this).addApi(Auth.GOOGLE_SIGN_IN_API, gso).build();
+        firebaseStorage = FirebaseStorage.getInstance();
         //-----------------------------------------------------------------------------------------------------------
 
 
@@ -79,7 +103,7 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
             public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
                 FirebaseUser fUser = firebaseAuth.getCurrentUser();
                 if (fUser != null) {
-                    Log.d(TAG, "onAuthStateChanged: signed_in : " + fUser.getDisplayName());
+                    Log.d(TAG, "onAuthStateChanged: signed_in : " + fUser.getUid());
                     //User has successfully signed in, move to trending activity
                     Intent intent = new Intent(LoginActivity.this, TrendingActivity.class);
                     startActivity(intent);
@@ -185,11 +209,37 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
                                 SharedPreferences sharedPreferences = getSharedPreferences(USER_INFO, 0);
                                 boolean containsUserData = sharedPreferences.getBoolean(fUser.getUid(), false);
 
+
                                 //The user has never signed in with this phone before, pull in information from database
                                 if (!containsUserData) {
-                                    Intent intent = new Intent(LoginActivity.this, UserService.class);
-                                    intent.setAction(UserService.LOAD_USER_DATA);
-                                    startService(intent);
+                                    StorageReference storageReference = firebaseStorage.getReference();
+                                    storageReference = storageReference.child("user_images/user_profile_" +
+                                            mAuth.getCurrentUser().getUid() + ".png");
+                                    final long TEN_MEGABYTES = 1024*1024 * 10;
+                                    storageReference.getBytes(TEN_MEGABYTES).addOnSuccessListener(new OnSuccessListener<byte[]>() {
+                                        @Override
+                                        public void onSuccess(byte[] bytes) {
+                                            ContextWrapper contextWrapper = new ContextWrapper(getApplicationContext());
+                                            File userImagePath = contextWrapper.getDir(USER_IMAGES_FOLDER, Context.MODE_PRIVATE);
+                                            String userProfileFileName = "profile_pic_" + mAuth.getCurrentUser().getUid() + ".png";
+                                            File userProfileFile = new File(userImagePath, userProfileFileName);
+                                            try {
+                                                FileOutputStream fileOutputStream = new FileOutputStream(userProfileFile);
+                                                Bitmap bitmapImage = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+                                                bitmapImage.compress(Bitmap.CompressFormat.PNG, 100, fileOutputStream);
+                                                fileOutputStream.close();
+                                            }catch(FileNotFoundException exception) {
+                                                exception.printStackTrace();
+                                            }catch(IOException exception) {
+                                                exception.printStackTrace();
+                                            }
+                                        }
+                                    }).addOnFailureListener(new OnFailureListener() {
+                                        @Override
+                                        public void onFailure(@NonNull Exception e) {
+                                            e.printStackTrace();
+                                        }
+                                    });
                                 }
                             }
                         }
@@ -242,4 +292,5 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
     private void printToast(String message) {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
     }
+
 }

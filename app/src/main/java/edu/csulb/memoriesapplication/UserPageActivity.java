@@ -178,7 +178,7 @@ public class UserPageActivity extends Activity implements View.OnClickListener {
                 exception.printStackTrace();
             }
             StorageReference storageReference = firebaseStorage.getReference()
-                    .child("user_images/user_profile_" + userId + ".png");
+                    .child("user_images/user_profile_" + mAuth.getCurrentUser().getUid() + ".png");
             userImage.setDrawingCacheEnabled(true);
             userImage.buildDrawingCache();
             Bitmap bitmapCache = userImage.getDrawingCache();
