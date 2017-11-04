@@ -3,10 +3,12 @@ package edu.csulb.memoriesapplication;
 import android.*;
 import android.Manifest;
 import android.app.Activity;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
@@ -17,10 +19,14 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
+import android.support.design.widget.AppBarLayout;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.content.LocalBroadcastManager;
+import android.text.Layout;
 import android.util.Log;
 import android.view.View;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.google.android.gms.tasks.OnFailureListener;
@@ -50,37 +56,49 @@ import de.hdodenhof.circleimageview.CircleImageView;
 
 public class UserPageActivity extends Activity implements View.OnClickListener {
 
-    FirebaseAuth mAuth;
-    FirebaseDatabase database;
+    private FirebaseAuth mAuth;
+    private FirebaseDatabase database;
     private final int RESULT_LOAD_PROFILE_PIC = 1;
-    DatabaseReference databaseReference;
     private FirebaseStorage firebaseStorage;
-    final String TAG = "UserPageActivity";
-    String userProfileFileName;
-    File userImagePath;
-    final String USER_IMAGES_FOLDER  = "user_images";
-    final int REQUEST_CODE = 1052;
-    private final String USER_SETTINGS = "User Settings";
-    private final String READ_PERMISSION = "Read_external_storage_permission_granted";
+    private final String TAG = "UserPageActivity";
+    private String userProfileFileName;
+    private File userImagePath;
+    private final String USER_IMAGES_FOLDER  = "user_images";
+    private final int REQUEST_CODE = 1052;
     private boolean readPermissionGranted;
+    private String userUid;
     private CircleImageView userImage;
     private TextView postsCountText;
     private TextView profileInformationTextView;
     private TextView userNameTextView;
     private TextView userIdTextView;
+    private View viewContainer;
+    private View progressBar;
 
     @Override
     protected void onCreate(Bundle onSavedInstanceState) {
         super.onCreate(onSavedInstanceState);
         setContentView(R.layout.activity_user_profile);
 
+        //Instantiate all of the views
+        postsCountText = (TextView) this.findViewById(R.id.posts_count_text);
+        profileInformationTextView = (TextView) this.findViewById(R.id.profile_information_text);
+        userNameTextView = (TextView) this.findViewById(R.id.user_name_text);
+        userIdTextView = (TextView) this.findViewById(R.id.user_id_text);
+        viewContainer = (AppBarLayout) this.findViewById(R.id.view_container);
+        progressBar = (ProgressBar) this.findViewById(R.id.progress_bar);
+        viewContainer.setVisibility(View.GONE);
+
+        //Instantiate all of the database variables
         mAuth = FirebaseAuth.getInstance();
         database = FirebaseDatabase.getInstance();
         firebaseStorage = FirebaseStorage.getInstance();
 
+        userUid = mAuth.getCurrentUser().getUid();
+
         ContextWrapper contextWrapper = new ContextWrapper(getApplicationContext());
         userImagePath = contextWrapper.getDir(USER_IMAGES_FOLDER, Context.MODE_PRIVATE);
-        userProfileFileName = "profile_pic_" + mAuth.getCurrentUser().getUid() + ".png";
+        userProfileFileName = "profile_pic_" + userUid + ".png";
 
         userImage = (CircleImageView) this.findViewById(R.id.user_profile_picture);
         userImage.setOnClickListener(this);
@@ -95,20 +113,34 @@ public class UserPageActivity extends Activity implements View.OnClickListener {
             }
         }
 
-        SharedPreferences sharedPreferences = getSharedPreferences(USER_SETTINGS, 0);
-        readPermissionGranted = sharedPreferences.getBoolean(READ_PERMISSION, false);
+        //Check if read permission is granted for the application to read the user's information located on their external storage
+        SharedPreferences sharedPreferences = getSharedPreferences(SharedPreferencesKey.USER_SETTINGS, 0);
+        readPermissionGranted = sharedPreferences.getBoolean(SharedPreferencesKey.READ_PERMISSION + userUid, false);
 
-        postsCountText = (TextView) this.findViewById(R.id.posts_count_text);
-        profileInformationTextView = (TextView) this.findViewById(R.id.profile_information_text);
-        userNameTextView = (TextView) this.findViewById(R.id.user_name_text);
-        userIdTextView = (TextView) this.findViewById(R.id.user_id_text);
+        //Register receiver to check if UserService is finished refreshing the user data
+        IntentFilter intentFilter = new IntentFilter(BroadcastKey.USER_INFO_REFRESH_FINISH_ACTION);
+        LocalBroadcastManager.getInstance(this).registerReceiver(new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                //Refresh in all of the user's information and set the various text views to the values as necessary
+                User user = (User) intent.getParcelableExtra(BroadcastKey.USER_OBJECT);
+                loadUser(user);
+            }
+        }, intentFilter);
 
+        //Call to refresh the user's primitive data
+        refreshUserInfo();
 
-        loadUser();
     }
 
-    private void loadUser() {
-        //Load in info from internal storage after login finishes it's service
+    private void loadUser(User user) {
+        //Load in info from internal storage after UserService finishes refreshing all of the information
+        postsCountText.setText(String.valueOf(user.userPostsCount));
+        userIdTextView.setText(user.userID);
+        userNameTextView.setText(user.name);
+        profileInformationTextView.setText(user.userIntro);
+        progressBar.setVisibility(View.GONE);
+        viewContainer.setVisibility(View.VISIBLE);
     }
 
     //Ask the user if we are able to store a picture with their permission during runtime
@@ -126,9 +158,9 @@ public class UserPageActivity extends Activity implements View.OnClickListener {
             case REQUEST_CODE: {
                     if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                         readPermissionGranted = true;
-                        SharedPreferences sharedPreferences = getSharedPreferences(USER_SETTINGS, 0);
+                        SharedPreferences sharedPreferences = getSharedPreferences(SharedPreferencesKey.USER_SETTINGS, 0);
                         SharedPreferences.Editor userSettings = sharedPreferences.edit();
-                        userSettings.putBoolean(READ_PERMISSION, true);
+                        userSettings.putBoolean(SharedPreferencesKey.READ_PERMISSION + userUid, true);
                         userSettings.commit();
                     }
             }
@@ -164,7 +196,6 @@ public class UserPageActivity extends Activity implements View.OnClickListener {
             Bitmap userProfileImage = BitmapFactory.decodeFile(picturePath);
             cursor.close();
 
-            String userId = mAuth.getCurrentUser().getUid();
             File imagePath = new File(userImagePath, userProfileFileName);
 
             try{
@@ -178,7 +209,7 @@ public class UserPageActivity extends Activity implements View.OnClickListener {
                 exception.printStackTrace();
             }
             StorageReference storageReference = firebaseStorage.getReference()
-                    .child("user_images/user_profile_" + userId + ".png");
+                    .child("user_images/user_profile_" + userUid + ".png");
             userImage.setDrawingCacheEnabled(true);
             userImage.buildDrawingCache();
             Bitmap bitmapCache = userImage.getDrawingCache();
@@ -199,5 +230,11 @@ public class UserPageActivity extends Activity implements View.OnClickListener {
                 }
             });
         }
+    }
+
+    private void refreshUserInfo() {
+        Intent intent = new Intent(UserPageActivity.this, UserService.class);
+        intent.setAction(UserService.REFRESH_USER_PRIMITIVE_DATA);
+        startService(intent);
     }
 }

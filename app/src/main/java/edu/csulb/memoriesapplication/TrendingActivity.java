@@ -2,6 +2,7 @@ package edu.csulb.memoriesapplication;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
@@ -24,6 +25,7 @@ public class TrendingActivity extends Activity implements View.OnClickListener{
     private TextView text;
     private Button button;
     private FirebaseAuth mAuth;
+    private final String USER_INFO = "user_info";
 
     //added
     private LinearLayoutManager linearLayoutManager;

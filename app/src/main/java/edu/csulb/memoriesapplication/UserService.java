@@ -4,16 +4,26 @@ import android.app.IntentService;
 import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.os.Bundle;
 import android.os.IBinder;
+import android.provider.ContactsContract;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageException;
 import com.google.firebase.storage.StorageReference;
@@ -29,7 +39,12 @@ import java.io.IOException;
 
 public class UserService extends IntentService {
 
-    public final static String LOAD_USER_DATA = "LOAD_USER_DATA";
+    public final static String LOAD_USER_DATA_FROM_DATABASE = "LUDFD";
+    public final static String REFRESH_USER_PRIMITIVE_DATA = "RUPD";
+    public final static int USER_NAME = 0;
+    public final static int USER_INTRO = 1;
+    public final static int USER_ID = 2;
+    public final static int USER_POSTS_COUNT = 3;
     private final String TAG = "UserService";
     final String USER_IMAGES_FOLDER  = "user_images";
 
@@ -62,7 +77,7 @@ public class UserService extends IntentService {
     @Override
     protected void onHandleIntent(@Nullable Intent intent) {
         switch(intent.getAction()) {
-            case LOAD_USER_DATA:{
+            case LOAD_USER_DATA_FROM_DATABASE:{
                 //initialize connections
                 final FirebaseAuth firebaseAuth = FirebaseAuth.getInstance();
                 FirebaseStorage firebaseStorage = FirebaseStorage.getInstance();
@@ -103,6 +118,27 @@ public class UserService extends IntentService {
                             }
                             break;
                         }
+                    }
+                });
+            }
+            break;
+            case REFRESH_USER_PRIMITIVE_DATA: {
+                final FirebaseAuth firebaseAuth = FirebaseAuth.getInstance();
+                final String userId = firebaseAuth.getCurrentUser().getUid();
+                FirebaseDatabase firebaseDatabase = FirebaseDatabase.getInstance();
+                firebaseDatabase.getReference().child("Users").child(userId).addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        User user = dataSnapshot.getValue(User.class);
+                        Log.d(TAG, "Refreshing user info for " + user.userID);
+                        Intent userRefreshFinishedIntent = new Intent(BroadcastKey.USER_INFO_REFRESH_FINISH_ACTION);
+                        userRefreshFinishedIntent.putExtra(BroadcastKey.USER_OBJECT, user);
+                        LocalBroadcastManager.getInstance(UserService.this).sendBroadcast(userRefreshFinishedIntent);
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+
                     }
                 });
             }

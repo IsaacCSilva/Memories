@@ -38,7 +38,6 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
     private FirebaseAuth.AuthStateListener mAuthListener;
     private FirebaseDatabase firebaseDatabase;
     private final String TAG = "LoginActivity";
-    private final String USER_INFO = "user_info";
     private GoogleApiClient googleApiClient;
     private EditText userEmail;
     private EditText userPassword;
@@ -79,7 +78,7 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
             public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
                 FirebaseUser fUser = firebaseAuth.getCurrentUser();
                 if (fUser != null) {
-                    Log.d(TAG, "onAuthStateChanged: signed_in : " + fUser.getDisplayName());
+                    Log.d(TAG, "onAuthStateChanged: signed_in : " + fUser.getUid());
                     //User has successfully signed in, move to trending activity
                     Intent intent = new Intent(LoginActivity.this, TrendingActivity.class);
                     startActivity(intent);
@@ -173,25 +172,24 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
                         @Override
                         public void onDataChange(DataSnapshot dataSnapshot) {
                             User user = dataSnapshot.getValue(User.class);
-                            //If User does not exist in our database, create an instance of them
+                            SharedPreferences sharedPreferences = getSharedPreferences(SharedPreferencesKey.USER_INFO, 0);
                             if (user == null) {
+                                //If User does not exist in our database, create an instance of them
                                 databaseReference.child(fUser.getUid()).setValue(new User(fUser.getEmail(), fUser.getDisplayName()));
-                                //Log that the user has logged in using this device
-                                SharedPreferences sharedPreferences = getSharedPreferences(USER_INFO, 0);
-                                SharedPreferences.Editor editor = sharedPreferences.edit();
-                                editor.putBoolean(fUser.getUid(), true);
                             } else {
                                 //User account already exists, check if they have signed in using this phone before
-                                SharedPreferences sharedPreferences = getSharedPreferences(USER_INFO, 0);
-                                boolean containsUserData = sharedPreferences.getBoolean(fUser.getUid(), false);
+                                boolean containsUserData = sharedPreferences.getBoolean(SharedPreferencesKey.USER_EXISTS + fUser.getUid(), false);
 
                                 //The user has never signed in with this phone before, pull in information from database
                                 if (!containsUserData) {
                                     Intent intent = new Intent(LoginActivity.this, UserService.class);
-                                    intent.setAction(UserService.LOAD_USER_DATA);
+                                    intent.setAction(UserService.LOAD_USER_DATA_FROM_DATABASE);
                                     startService(intent);
                                 }
                             }
+                            //Log that user has signed in with this device
+                            SharedPreferences.Editor editor = sharedPreferences.edit();
+                            editor.putBoolean(SharedPreferencesKey.USER_EXISTS + fUser.getUid(), true);
                         }
 
                         @Override
