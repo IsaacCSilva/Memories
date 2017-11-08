@@ -41,10 +41,6 @@ public class UserService extends IntentService {
 
     public final static String LOAD_USER_DATA_FROM_DATABASE = "LUDFD";
     public final static String REFRESH_USER_PRIMITIVE_DATA = "RUPD";
-    public final static int USER_NAME = 0;
-    public final static int USER_INTRO = 1;
-    public final static int USER_ID = 2;
-    public final static int USER_POSTS_COUNT = 3;
     private final String TAG = "UserService";
     final String USER_IMAGES_FOLDER  = "user_images";
 
