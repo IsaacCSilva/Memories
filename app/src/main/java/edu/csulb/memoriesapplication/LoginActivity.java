@@ -167,31 +167,16 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
                     Log.d(TAG, "signInWithCredential:success");
 
                     //Access the database and see if the user exists
-                    final DatabaseReference databaseReference = firebaseDatabase.getReference("Users");
+                    final DatabaseReference databaseReference = firebaseDatabase.getReference(DatabaseReferenceKeys.USERS);
                     databaseReference.child(fUser.getUid()).addListenerForSingleValueEvent(new ValueEventListener() {
                         @Override
                         public void onDataChange(DataSnapshot dataSnapshot) {
                             User user = dataSnapshot.getValue(User.class);
-                            SharedPreferences sharedPreferences = getSharedPreferences(SharedPreferencesKey.USER_INFO, 0);
                             if (user == null) {
-                                //If User does not exist in our database, create an instance of them
+                                //If User does not exist in our database, create an instance of them in the database
                                 databaseReference.child(fUser.getUid()).setValue(new User(fUser.getEmail(), fUser.getDisplayName()));
-                            } else {
-                                //User account already exists, check if they have signed in using this phone before
-                                boolean containsUserData = sharedPreferences.getBoolean(SharedPreferencesKey.USER_EXISTS + fUser.getUid(), false);
-
-                                //The user has never signed in with this phone before, pull in information from database
-                                if (!containsUserData) {
-                                    Intent intent = new Intent(LoginActivity.this, UserService.class);
-                                    intent.setAction(UserService.LOAD_USER_DATA_FROM_DATABASE);
-                                    startService(intent);
-                                }
                             }
-                            //Log that user has signed in with this device
-                            SharedPreferences.Editor editor = sharedPreferences.edit();
-                            editor.putBoolean(SharedPreferencesKey.USER_EXISTS + fUser.getUid(), true);
                         }
-
                         @Override
                         public void onCancelled(DatabaseError databaseError) {
 
