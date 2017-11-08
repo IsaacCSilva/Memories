@@ -196,6 +196,12 @@ public class UserPageActivity extends Activity implements View.OnClickListener {
             Bitmap userProfileImage = BitmapFactory.decodeFile(picturePath);
             cursor.close();
 
+            Intent storeProfileIntent = new Intent(UserService.STORE_USER_PROFILE_PICTURES_TO_DATABASE);
+            storeProfileIntent.putExtra(StorageReferenceKeys.IMAGE_TYPE, StorageReferenceKeys.USER_PROFILE_IMAGE);
+            storeProfileIntent.putExtra("image", userProfileImage);
+
+
+
             File imagePath = new File(userImagePath, userProfileFileName);
 
             try{
@@ -209,7 +215,7 @@ public class UserPageActivity extends Activity implements View.OnClickListener {
                 exception.printStackTrace();
             }
             StorageReference storageReference = firebaseStorage.getReference()
-                    .child("user_images/user_profile_" + userUid + ".png");
+                    .child(StorageReferenceKeys.USER_PROFILE_PIC_PATH + userUid + ".png");
             userImage.setDrawingCacheEnabled(true);
             userImage.buildDrawingCache();
             Bitmap bitmapCache = userImage.getDrawingCache();

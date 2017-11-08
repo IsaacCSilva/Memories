@@ -4,13 +4,9 @@ import android.app.IntentService;
 import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.Intent;
-import android.content.IntentFilter;
-import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.os.Bundle;
 import android.os.IBinder;
-import android.provider.ContactsContract;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.content.LocalBroadcastManager;
@@ -21,7 +17,6 @@ import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
@@ -39,16 +34,43 @@ import java.io.IOException;
 
 public class UserService extends IntentService {
 
-    public final static String LOAD_USER_DATA_FROM_DATABASE = "LUDFD";
+    public final static String LOAD_USER_PROFILE_PICTURES_FROM_DATABASE = "LUPPFD";
     public final static String REFRESH_USER_PRIMITIVE_DATA = "RUPD";
-    public final static int USER_NAME = 0;
-    public final static int USER_INTRO = 1;
-    public final static int USER_ID = 2;
-    public final static int USER_POSTS_COUNT = 3;
+    public final static String STORE_USER_PROFILE_PICTURES_TO_DATABASE = "SUPPTD";
     private final String TAG = "UserService";
-    final String USER_IMAGES_FOLDER  = "user_images";
+    private StorageListener storageListener = new StorageListener();
 
-    public UserService(){
+    private class StorageListener implements OnSuccessListener<byte[]>, OnFailureListener {
+
+        private Bitmap image = null;
+
+        @Override
+        public void onSuccess(byte[] bytes) {
+            image = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+        }
+
+        @Override
+        public void onFailure(@NonNull Exception exception) {
+            int errorCode = ((StorageException) exception).getErrorCode();
+            switch (errorCode) {
+                case StorageException.ERROR_OBJECT_NOT_FOUND: {
+                    Log.d(TAG, "User File not found in storage.");
+                }
+                break;
+                case StorageException.ERROR_CANCELED: {
+                    Log.d(TAG, "User has canceled.");
+                }
+                break;
+            }
+            image = null;
+        }
+
+        private Bitmap getImage() {
+            return image;
+        }
+    }
+
+    public UserService() {
         super("UserService");
     }
 
@@ -76,57 +98,65 @@ public class UserService extends IntentService {
 
     @Override
     protected void onHandleIntent(@Nullable Intent intent) {
-        switch(intent.getAction()) {
-            case LOAD_USER_DATA_FROM_DATABASE:{
+        switch (intent.getAction()) {
+            //Retrieves user background picture and user profile picture from the database to be displayed in the user page
+            case LOAD_USER_PROFILE_PICTURES_FROM_DATABASE: {
                 //initialize connections
-                final FirebaseAuth firebaseAuth = FirebaseAuth.getInstance();
-                FirebaseStorage firebaseStorage = FirebaseStorage.getInstance();
-                StorageReference storageReference = firebaseStorage.getReference();
+                FirebaseAuth firebaseAuth = FirebaseAuth.getInstance();
 
-                storageReference = storageReference.child("user_images/user_profile_" +
-                        firebaseAuth.getCurrentUser().getUid() + ".png");
-                final long TEN_MEGABYTES = 1024*1024*10;
-                storageReference.getBytes(TEN_MEGABYTES).addOnSuccessListener(new OnSuccessListener<byte[]>() {
-                    @Override
-                    public void onSuccess(byte[] bytes) {
-                        ContextWrapper contextWrapper = new ContextWrapper(getApplicationContext());
-                        File userImagePath = contextWrapper.getDir(USER_IMAGES_FOLDER, Context.MODE_PRIVATE);
-                        String userProfileFileName = "profile_pic_" + firebaseAuth.getCurrentUser().getUid() + ".png";
-                        File userProfileFile = new File(userImagePath, userProfileFileName);
-                        try {
-                            FileOutputStream fileOutputStream = new FileOutputStream(userProfileFile);
-                            Bitmap bitmapImage = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
-                            bitmapImage.compress(Bitmap.CompressFormat.PNG, 100, fileOutputStream);
-                            fileOutputStream.close();
-                        }catch(FileNotFoundException exception) {
-                            exception.printStackTrace();
-                        }catch(IOException exception) {
-                            exception.printStackTrace();
-                        }
+                String userId = firebaseAuth.getCurrentUser().getUid();
+                String userProfilePicPath = StorageReferenceKeys.USER_PROFILE_PIC_PATH + userId + ".png";
+                String userBackgroundPicPath = StorageReferenceKeys.USER_BACKGROUND_PIC_PATH + userId + ".png";
+
+                Bitmap userProfileImage = retrieveUserImageFromStorage(userProfilePicPath);
+                Bitmap userBackgroundImage = retrieveUserImageFromStorage(userBackgroundPicPath);
+
+                ContextWrapper contextWrapper = new ContextWrapper(getApplicationContext());
+                File internalUserImageStoragePath = contextWrapper.getDir(InternalStorage.USER_IMAGES_FOLDER, Context.MODE_PRIVATE);
+                File userProfilePic = new File(internalUserImageStoragePath, InternalStorage.IND_USER_PROFILE_PIC + userId + ".png");
+                File userBackgroundPic = new File(internalUserImageStoragePath, InternalStorage.IND_USER_BACKGROUND_PIC + userId + ".png");
+                try {
+                    if (userProfileImage != null) {
+                        FileOutputStream profilePicOutStream = new FileOutputStream(userProfilePic);
+                        userProfileImage.compress(Bitmap.CompressFormat.PNG, 100, profilePicOutStream);
+                        profilePicOutStream.close();
                     }
-                }).addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception exception) {
-                        int errorCode = ((StorageException) exception).getErrorCode();
-                        switch(errorCode){
-                            case StorageException.ERROR_OBJECT_NOT_FOUND:{
-                                Log.d(TAG, "User File not found in storage.");
-                            }
-                            break;
-                            case StorageException.ERROR_CANCELED:{
-                                Log.d(TAG, "User has canceled.");
-                            }
-                            break;
-                        }
+                    if (userBackgroundImage != null) {
+                        FileOutputStream backgroundPicOutStream = new FileOutputStream(userBackgroundPic);
+                        userBackgroundImage.compress(Bitmap.CompressFormat.PNG, 100, backgroundPicOutStream);
+                        backgroundPicOutStream.close();
                     }
-                });
+                } catch (FileNotFoundException exception) {
+                    exception.printStackTrace();
+                } catch (IOException exception) {
+                    exception.printStackTrace();
+                }
             }
             break;
+            //----------------------------------------------------------------------------------------------------------------------------------------------------
+            //Stores the pictures provided in the intent to the database and to the internal storage of the device
+            case STORE_USER_PROFILE_PICTURES_TO_DATABASE: {
+                String pictureType = intent.getStringExtra(StorageReferenceKeys.IMAGE_TYPE);
+                Bitmap image = (Bitmap) intent.getParcelableExtra("image");
+                ContextWrapper contextWrapper = new ContextWrapper(getApplicationContext());
+                File magePath = contextWrapper.getDir(InternalStorage.USER_IMAGES_FOLDER, Context.MODE_PRIVATE);
+
+                if (pictureType.equals(StorageReferenceKeys.USER_PROFILE_IMAGE)) {
+
+                } else if (pictureType.equals(StorageReferenceKeys.USER_BACKGROUND_IMAGE)) {
+
+                } else {
+
+                }
+            }
+            break;
+            //-----------------------------------------------------------------------------------------------------------------------------------------------------
+            //Reloads all of the user primitive data such as their name, posts count, and account introduction
             case REFRESH_USER_PRIMITIVE_DATA: {
                 final FirebaseAuth firebaseAuth = FirebaseAuth.getInstance();
                 final String userId = firebaseAuth.getCurrentUser().getUid();
                 FirebaseDatabase firebaseDatabase = FirebaseDatabase.getInstance();
-                firebaseDatabase.getReference().child("Users").child(userId).addListenerForSingleValueEvent(new ValueEventListener() {
+                firebaseDatabase.getReference().child(DatabaseReferenceKeys.USERS).child(userId).addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
                         User user = dataSnapshot.getValue(User.class);
@@ -143,6 +173,18 @@ public class UserService extends IntentService {
                 });
             }
             break;
+
         }
     }
+
+
+    private Bitmap retrieveUserImageFromStorage(String userImagePath) {
+        StorageReference storageReference = FirebaseStorage.getInstance().getReference();
+        final long MAX_IMAGE_SIZE = 1024 * 1024 * 10;
+
+        storageReference.child(userImagePath).getBytes(MAX_IMAGE_SIZE)
+                .addOnSuccessListener(storageListener).addOnFailureListener(storageListener);
+        return storageListener.getImage();
+    }
+
 }
