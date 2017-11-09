@@ -1,12 +1,9 @@
 package edu.csulb.memoriesapplication;
 
-import android.*;
 import android.Manifest;
 import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.ContextWrapper;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
@@ -14,7 +11,6 @@ import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.media.Image;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -23,30 +19,17 @@ import android.support.design.widget.AppBarLayout;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.LocalBroadcastManager;
-import android.text.Layout;
 import android.util.Log;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
-import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.StorageReference;
-import com.google.firebase.storage.UploadTask;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 
@@ -57,17 +40,16 @@ import de.hdodenhof.circleimageview.CircleImageView;
 public class UserPageActivity extends Activity implements View.OnClickListener {
 
     private FirebaseAuth mAuth;
-    private FirebaseDatabase database;
     private final int RESULT_LOAD_PROFILE_PIC = 1;
-    private FirebaseStorage firebaseStorage;
+    private final int RESULT_LOAD_BACKGROUND_PIC = 2;
     private final String TAG = "UserPageActivity";
     private String userProfileFileName;
     private File userImagePath;
-    private final String USER_IMAGES_FOLDER  = "user_images";
     private final int REQUEST_CODE = 1052;
     private boolean readPermissionGranted;
     private String userUid;
-    private CircleImageView userImage;
+    private CircleImageView userProfileImage;
+    private ImageView backgroundImage;
     private TextView postsCountText;
     private TextView profileInformationTextView;
     private TextView userNameTextView;
@@ -80,7 +62,7 @@ public class UserPageActivity extends Activity implements View.OnClickListener {
         super.onCreate(onSavedInstanceState);
         setContentView(R.layout.activity_user_profile);
 
-        //Instantiate all of the views
+        //Instantiate all of the primitive views
         postsCountText = (TextView) this.findViewById(R.id.posts_count_text);
         profileInformationTextView = (TextView) this.findViewById(R.id.profile_information_text);
         userNameTextView = (TextView) this.findViewById(R.id.user_name_text);
@@ -91,23 +73,19 @@ public class UserPageActivity extends Activity implements View.OnClickListener {
 
         //Instantiate all of the database variables
         mAuth = FirebaseAuth.getInstance();
-        database = FirebaseDatabase.getInstance();
-        firebaseStorage = FirebaseStorage.getInstance();
 
-        userUid = mAuth.getCurrentUser().getUid();
+        //Initialize ImageViews and their listeners
+        userProfileImage = (CircleImageView) this.findViewById(R.id.user_profile_picture);
+        userProfileImage.setOnClickListener(this);
+        backgroundImage = (ImageView) this.findViewById(R.id.background_image);
+        backgroundImage.setOnClickListener(this);
 
-        ContextWrapper contextWrapper = new ContextWrapper(getApplicationContext());
-        userImagePath = contextWrapper.getDir(USER_IMAGES_FOLDER, Context.MODE_PRIVATE);
-        userProfileFileName = "profile_pic_" + userUid + ".png";
-
-        userImage = (CircleImageView) this.findViewById(R.id.user_profile_picture);
-        userImage.setOnClickListener(this);
         //Check if user image profile exists
         File userProfileFile = new File(userImagePath, userProfileFileName);
         if(userProfileFile.exists()) {
             try {
                 Bitmap userProfilePicture = BitmapFactory.decodeStream(new FileInputStream(userProfileFile));
-                userImage.setImageBitmap(userProfilePicture);
+                userProfileImage.setImageBitmap(userProfilePicture);
             }catch(FileNotFoundException exception) {
                 exception.printStackTrace();
             }
@@ -185,7 +163,9 @@ public class UserPageActivity extends Activity implements View.OnClickListener {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == RESULT_LOAD_PROFILE_PIC && resultCode == RESULT_OK && data != null) {
+        //Receives the user image or background image from gallery as the "OnReceive"
+        if ((requestCode == RESULT_LOAD_PROFILE_PIC || requestCode == RESULT_LOAD_BACKGROUND_PIC)
+                && resultCode == RESULT_OK && data != null) {
             Log.d(TAG, "Inside on Activity Result");
             Uri selectedImage = data.getData();
             String[] filePath = {MediaStore.Images.Media.DATA};
@@ -193,54 +173,27 @@ public class UserPageActivity extends Activity implements View.OnClickListener {
             cursor.moveToFirst();
             int columnIndex = cursor.getColumnIndex(filePath[0]);
             String picturePath = cursor.getString(columnIndex);
-            Bitmap userProfileImage = BitmapFactory.decodeFile(picturePath);
+            Bitmap userImage = BitmapFactory.decodeFile(picturePath);
             cursor.close();
 
-            Intent storeProfileIntent = new Intent(UserService.STORE_USER_PROFILE_PICTURES_TO_DATABASE);
-            storeProfileIntent.putExtra(StorageReferenceKeys.IMAGE_TYPE, StorageReferenceKeys.USER_PROFILE_IMAGE);
-            storeProfileIntent.putExtra("image", userProfileImage);
-
-
-
-            File imagePath = new File(userImagePath, userProfileFileName);
-
-            try{
-                FileOutputStream fileOutputStream = new FileOutputStream(imagePath);
-                userProfileImage.compress(Bitmap.CompressFormat.PNG, 100, fileOutputStream);
-                userImage.setImageBitmap(userProfileImage);
-                fileOutputStream.close();
-            }catch(FileNotFoundException exception) {
-                exception.printStackTrace();
-            }catch(IOException exception) {
-                exception.printStackTrace();
+            //Start intent to store the image into database and internal storage
+            Intent storeImageIntent = new Intent(UserService.STORE_USER_PICTURE_TO_DATABASE_AND_INTERNAL_STORAGE_ACTION);
+            if(requestCode == RESULT_LOAD_PROFILE_PIC) {
+                //Set the image received as the current user image of the UserPageActivity
+                userProfileImage.setImageBitmap(userImage);
+                storeImageIntent.putExtra(UserService.USER_IMAGE_TYPE_PROFILE, userImage);
+            } else {
+                //Set the image received as the current user background image of the UserPageActivity
+                backgroundImage.setImageBitmap(userImage);
+                storeImageIntent.putExtra(UserService.USER_IMAGE_TYPE_BACKGROUND, userImage);
             }
-            StorageReference storageReference = firebaseStorage.getReference()
-                    .child(StorageReferenceKeys.USER_PROFILE_PIC_PATH + userUid + ".png");
-            userImage.setDrawingCacheEnabled(true);
-            userImage.buildDrawingCache();
-            Bitmap bitmapCache = userImage.getDrawingCache();
-            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-            bitmapCache.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream);
-            byte[] outputData = byteArrayOutputStream.toByteArray();
-
-            UploadTask uploadTask = storageReference.putBytes(outputData);
-            uploadTask.addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
-                @Override
-                public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-
-                }
-            }).addOnFailureListener(new OnFailureListener() {
-                @Override
-                public void onFailure(@NonNull Exception e) {
-                    e.printStackTrace();
-                }
-            });
+            startService(storeImageIntent);
         }
     }
 
     private void refreshUserInfo() {
         Intent intent = new Intent(UserPageActivity.this, UserService.class);
-        intent.setAction(UserService.REFRESH_USER_PRIMITIVE_DATA);
+        intent.setAction(UserService.REFRESH_USER_PRIMITIVE_DATA_ACTION);
         startService(intent);
     }
 }
