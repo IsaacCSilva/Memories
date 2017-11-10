@@ -18,9 +18,6 @@ import java.io.ByteArrayOutputStream;
 public class UserFirebaseStorage {
     public final static String USER_PROFILE_PIC_PATH = "user_images/user_profile_";
     public final static String USER_BACKGROUND_PIC_PATH = "user_images/user_background_";
-    public final static String USER_PROFILE_IMAGE = "profile_image";
-    public final static String USER_BACKGROUND_IMAGE = "background_image";
-    public final static String IMAGE_TYPE = "image_type";
     public final static String IMAGE_EXTENSION_TYPE = ".png";
 
     public enum ImageType{
@@ -54,5 +51,15 @@ public class UserFirebaseStorage {
                 e.printStackTrace();
             }
         });
+    }
+
+    public static Bitmap getProfileImage(String userId) {
+
+        return null;
+    }
+
+    public static Bitmap getBackgroundImage(String userId) {
+
+        return null;
     }
 }

@@ -27,11 +27,6 @@ import android.widget.TextView;
 
 import com.google.firebase.auth.FirebaseAuth;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-
 import de.hdodenhof.circleimageview.CircleImageView;
 
 /**
@@ -55,6 +50,9 @@ public class UserPageActivity extends Activity implements View.OnClickListener {
     private View viewContainer;
     private View progressBar;
     private String userId;
+    private boolean userPrimitiveDataLoaded;
+    private boolean userProfileImageLoaded;
+    private boolean userBackgroundImageLoaded;
 
     @Override
     protected void onCreate(Bundle onSavedInstanceState) {
@@ -80,21 +78,25 @@ public class UserPageActivity extends Activity implements View.OnClickListener {
         backgroundImageView = (ImageView) this.findViewById(R.id.background_image);
         backgroundImageView.setOnClickListener(this);
 
+        //Set the boolean values to false to let the activity only appear once everything is loaded
+        userPrimitiveDataLoaded = false;
+        userProfileImageLoaded = false;
+        userBackgroundImageLoaded = false;
+
         //Check if user profile image exists
         Bitmap userProfilePic = InternalStorage.getProfilePic(this, userId);
         if(userProfilePic != null) {
             userProfileImageView.setImageBitmap(userProfilePic);
-        } else {
-            //Check if the images are in FirebaseStorage
+            userProfileImageLoaded = true;
         }
 
         //Check if user background image exists
         Bitmap userBackgroundPic = InternalStorage.getBackgroundPic(this, userId);
         if(userBackgroundPic != null) {
             backgroundImageView.setImageBitmap(userBackgroundPic);
-        } else {
-            //Check if the background is in FirebaseStorage
+            userBackgroundImageLoaded = true;
         }
+
 
         //Check if read permission is granted for the application to read the user's information located on their external storage
         SharedPreferences sharedPreferences = getSharedPreferences(SharedPreferencesKey.USER_SETTINGS, 0);
@@ -116,12 +118,28 @@ public class UserPageActivity extends Activity implements View.OnClickListener {
 
     }
 
+    @Override
+    protected void onStart() {
+        super.onStart();
+        refreshUserInfo();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        userPrimitiveDataLoaded = false;
+    }
+
     private void loadUser(User user) {
         //Load in info from internal storage after UserService finishes refreshing all of the information
         postsCountText.setText(String.valueOf(user.userPostsCount));
         userIdTextView.setText(user.userID);
         userNameTextView.setText(user.name);
         profileInformationTextView.setText(user.userIntro);
+        userPrimitiveDataLoaded = true;
+
+        //Makes sure that everything is loaded before making the views visible
+        makeViewsVisible();
     }
 
     //Ask the user if we are able to store a picture with their permission during runtime
@@ -218,7 +236,9 @@ public class UserPageActivity extends Activity implements View.OnClickListener {
     }
 
     private void makeViewsVisible() {
-        progressBar.setVisibility(View.GONE);
-        viewContainer.setVisibility(View.VISIBLE);
+        if(userProfileImageLoaded && userBackgroundImageLoaded && userPrimitiveDataLoaded) {
+            progressBar.setVisibility(View.GONE);
+            viewContainer.setVisibility(View.VISIBLE);
+        }
     }
 }
