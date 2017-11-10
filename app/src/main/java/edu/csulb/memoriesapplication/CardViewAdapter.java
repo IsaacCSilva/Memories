@@ -95,13 +95,22 @@ public class CardViewAdapter extends RecyclerView.Adapter<CardViewAdapter.CardVi
             RelativeLayout rv = new RelativeLayout(context, null);
             VideoView videoView = new VideoView(context);
             videoView.setLayoutParams(lp);
-            MediaController mc = new MediaController(context);
-            mc.setAnchorView(videoView);
-            videoView.setMediaController(mc);
+            //MediaController mc = new MediaController(context);
+            //mc.setAnchorView(videoView);
+            //videoView.setMediaController(mc);
+//            //videoView.setOnPreparedListener (new MediaPlayer.OnPreparedListener() {
+//                @Override
+//                public void onPrepared(MediaPlayer mp) {
+//                    mp.setLooping(true);
+//                }
+//            });
             videoView.setVideoURI(polaroid.getVideoUri());
             rv.addView(videoView);
             rv.setBackgroundColor(Color.BLACK);
             cardView.addView(rv);
+            if(position == 0) {
+                videoView.start();
+            }
         }
     }
 
