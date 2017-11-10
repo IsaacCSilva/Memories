@@ -27,6 +27,7 @@ import android.widget.TextView;
 
 import com.google.firebase.auth.FirebaseAuth;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -43,19 +44,17 @@ public class UserPageActivity extends Activity implements View.OnClickListener {
     private final int RESULT_LOAD_PROFILE_PIC = 1;
     private final int RESULT_LOAD_BACKGROUND_PIC = 2;
     private final String TAG = "UserPageActivity";
-    private String userProfileFileName;
-    private File userImagePath;
     private final int REQUEST_CODE = 1052;
     private boolean readPermissionGranted;
-    private String userUid;
-    private CircleImageView userProfileImage;
-    private ImageView backgroundImage;
+    private CircleImageView userProfileImageView;
+    private ImageView backgroundImageView;
     private TextView postsCountText;
     private TextView profileInformationTextView;
     private TextView userNameTextView;
     private TextView userIdTextView;
     private View viewContainer;
     private View progressBar;
+    private String userId;
 
     @Override
     protected void onCreate(Bundle onSavedInstanceState) {
@@ -73,27 +72,33 @@ public class UserPageActivity extends Activity implements View.OnClickListener {
 
         //Instantiate all of the database variables
         mAuth = FirebaseAuth.getInstance();
+        userId = mAuth.getCurrentUser().getUid();
 
         //Initialize ImageViews and their listeners
-        userProfileImage = (CircleImageView) this.findViewById(R.id.user_profile_picture);
-        userProfileImage.setOnClickListener(this);
-        backgroundImage = (ImageView) this.findViewById(R.id.background_image);
-        backgroundImage.setOnClickListener(this);
+        userProfileImageView = (CircleImageView) this.findViewById(R.id.user_profile_picture);
+        userProfileImageView.setOnClickListener(this);
+        backgroundImageView = (ImageView) this.findViewById(R.id.background_image);
+        backgroundImageView.setOnClickListener(this);
 
-        //Check if user image profile exists
-        File userProfileFile = new File(userImagePath, userProfileFileName);
-        if(userProfileFile.exists()) {
-            try {
-                Bitmap userProfilePicture = BitmapFactory.decodeStream(new FileInputStream(userProfileFile));
-                userProfileImage.setImageBitmap(userProfilePicture);
-            }catch(FileNotFoundException exception) {
-                exception.printStackTrace();
-            }
+        //Check if user profile image exists
+        Bitmap userProfilePic = InternalStorage.getProfilePic(this, userId);
+        if(userProfilePic != null) {
+            userProfileImageView.setImageBitmap(userProfilePic);
+        } else {
+            //Check if the images are in FirebaseStorage
+        }
+
+        //Check if user background image exists
+        Bitmap userBackgroundPic = InternalStorage.getBackgroundPic(this, userId);
+        if(userBackgroundPic != null) {
+            backgroundImageView.setImageBitmap(userBackgroundPic);
+        } else {
+            //Check if the background is in FirebaseStorage
         }
 
         //Check if read permission is granted for the application to read the user's information located on their external storage
         SharedPreferences sharedPreferences = getSharedPreferences(SharedPreferencesKey.USER_SETTINGS, 0);
-        readPermissionGranted = sharedPreferences.getBoolean(SharedPreferencesKey.READ_PERMISSION + userUid, false);
+        readPermissionGranted = sharedPreferences.getBoolean(SharedPreferencesKey.READ_PERMISSION + userId, false);
 
         //Register receiver to check if UserService is finished refreshing the user data
         IntentFilter intentFilter = new IntentFilter(BroadcastKey.USER_INFO_REFRESH_FINISH_ACTION);
@@ -117,8 +122,6 @@ public class UserPageActivity extends Activity implements View.OnClickListener {
         userIdTextView.setText(user.userID);
         userNameTextView.setText(user.name);
         profileInformationTextView.setText(user.userIntro);
-        progressBar.setVisibility(View.GONE);
-        viewContainer.setVisibility(View.VISIBLE);
     }
 
     //Ask the user if we are able to store a picture with their permission during runtime
@@ -138,7 +141,7 @@ public class UserPageActivity extends Activity implements View.OnClickListener {
                         readPermissionGranted = true;
                         SharedPreferences sharedPreferences = getSharedPreferences(SharedPreferencesKey.USER_SETTINGS, 0);
                         SharedPreferences.Editor userSettings = sharedPreferences.edit();
-                        userSettings.putBoolean(SharedPreferencesKey.READ_PERMISSION + userUid, true);
+                        userSettings.putBoolean(SharedPreferencesKey.READ_PERMISSION + userId, true);
                         userSettings.commit();
                     }
             }
@@ -157,6 +160,14 @@ public class UserPageActivity extends Activity implements View.OnClickListener {
                 }
             }
             break;
+            case R.id.background_image: {
+                if(!readPermissionGranted) {
+                    checkPermissions();
+                } else {
+                    Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+                    startActivityForResult(intent, RESULT_LOAD_BACKGROUND_PIC);
+                }
+            }
         }
     }
 
@@ -177,16 +188,25 @@ public class UserPageActivity extends Activity implements View.OnClickListener {
             cursor.close();
 
             //Start intent to store the image into database and internal storage
-            Intent storeImageIntent = new Intent(UserService.STORE_USER_PICTURE_TO_DATABASE_AND_INTERNAL_STORAGE_ACTION);
+            Intent storeImageIntent = new Intent(UserService.STORE_USER_PICTURE_TO_DATABASE);
+            storeImageIntent.setClass(this, UserService.class);
+
             if(requestCode == RESULT_LOAD_PROFILE_PIC) {
                 //Set the image received as the current user image of the UserPageActivity
-                userProfileImage.setImageBitmap(userImage);
-                storeImageIntent.putExtra(UserService.USER_IMAGE_TYPE_PROFILE, userImage);
+                userProfileImageView.setImageBitmap(userImage);
+                //Store the image received in the internal storage
+                InternalStorage.saveImageFile(this, InternalStorage.ImageType.PROFILE, userId, userImage);
+                //Note that the image type is of profile picture
+                storeImageIntent.putExtra(UserService.IMAGE_TYPE, UserService.USER_IMAGE_TYPE_PROFILE);
             } else {
                 //Set the image received as the current user background image of the UserPageActivity
-                backgroundImage.setImageBitmap(userImage);
-                storeImageIntent.putExtra(UserService.USER_IMAGE_TYPE_BACKGROUND, userImage);
+                backgroundImageView.setImageBitmap(userImage);
+                //Store the image received in the internal storage
+                InternalStorage.saveImageFile(this, InternalStorage.ImageType.BACKGROUND, userId, userImage);
+                //Note that the image type is of background
+                storeImageIntent.putExtra(UserService.IMAGE_TYPE, UserService.USER_IMAGE_TYPE_BACKGROUND);
             }
+            //Start the service to store the images in both the database and the internal storage of the device
             startService(storeImageIntent);
         }
     }
@@ -195,5 +215,10 @@ public class UserPageActivity extends Activity implements View.OnClickListener {
         Intent intent = new Intent(UserPageActivity.this, UserService.class);
         intent.setAction(UserService.REFRESH_USER_PRIMITIVE_DATA_ACTION);
         startService(intent);
+    }
+
+    private void makeViewsVisible() {
+        progressBar.setVisibility(View.GONE);
+        viewContainer.setVisibility(View.VISIBLE);
     }
 }

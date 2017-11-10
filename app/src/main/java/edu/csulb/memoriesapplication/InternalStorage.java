@@ -3,8 +3,10 @@ package edu.csulb.memoriesapplication;
 import android.content.Context;
 import android.content.ContextWrapper;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -25,16 +27,14 @@ public class InternalStorage {
     }
 
     public static void saveImageFile(Context context, ImageType imageType, String userId, Bitmap image) {
-        ContextWrapper contextWrapper = new ContextWrapper(context.getApplicationContext());
-        File internalUserImageStoragePath = contextWrapper.getDir(USER_IMAGES_FOLDER, Context.MODE_PRIVATE);
-
+        File imageStoragePath = internalUserImageStoragePath(context);
         String fileName = null;
         if(imageType == ImageType.PROFILE) {
             fileName = IND_USER_PROFILE_PIC + userId + IMAGE_EXTENSION;
         }else if(imageType == ImageType.BACKGROUND){
             fileName = IND_USER_BACKGROUND_PIC + userId + IMAGE_EXTENSION;
         }
-        File toSaveImagePath = new File(internalUserImageStoragePath, fileName);
+        File toSaveImagePath = new File(imageStoragePath, fileName);
         try{
             FileOutputStream fileOutputStream = new FileOutputStream(toSaveImagePath);
             image.compress(Bitmap.CompressFormat.PNG, 100, fileOutputStream);
@@ -44,5 +44,44 @@ public class InternalStorage {
         }catch(IOException exception) {
             exception.printStackTrace();
         }
+    }
+
+    public static Bitmap getProfilePic(Context context, String userId) {
+        File imageStoragePath = internalUserImageStoragePath(context);
+        String imageName = IND_USER_PROFILE_PIC + userId + IMAGE_EXTENSION;
+        File userImage = new File(imageStoragePath, imageName);
+        if(userImage.exists()) {
+            try {
+                Bitmap userProfilePicture = BitmapFactory.decodeStream(new FileInputStream(userImage));
+                return userProfilePicture;
+            }catch(FileNotFoundException exception) {
+                exception.printStackTrace();
+            }
+        }
+
+        return null;
+    }
+
+    public static Bitmap getBackgroundPic(Context context, String userId) {
+        File imageStoragePath = internalUserImageStoragePath(context);
+        String imageName = IND_USER_BACKGROUND_PIC + userId + IMAGE_EXTENSION;
+        File userImage = new File(imageStoragePath, imageName);
+        if(userImage.exists()) {
+            try {
+                Bitmap userBackgroundPicture = BitmapFactory.decodeStream(new FileInputStream(userImage));
+                return userBackgroundPicture;
+            }catch(FileNotFoundException exception) {
+                exception.printStackTrace();
+            }
+        }
+
+        return null;
+    }
+
+
+    private static File internalUserImageStoragePath(Context context) {
+        ContextWrapper contextWrapper = new ContextWrapper(context.getApplicationContext());
+        File path = contextWrapper.getDir(USER_IMAGES_FOLDER, Context.MODE_PRIVATE);
+        return path;
     }
 }
