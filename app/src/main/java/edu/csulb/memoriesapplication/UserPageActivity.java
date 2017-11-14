@@ -83,19 +83,42 @@ public class UserPageActivity extends Activity implements View.OnClickListener {
         userProfileImageLoaded = false;
         userBackgroundImageLoaded = false;
 
-        //Check if user profile image exists
+
+        //Check if user profile image exists in internal storage, if so, set it as the profile image
         Bitmap userProfilePic = InternalStorage.getProfilePic(this, userId);
         if(userProfilePic != null) {
             userProfileImageView.setImageBitmap(userProfilePic);
             userProfileImageLoaded = true;
+        } else {
+            //User profile image is not contained in internal storage, check if the FirebaseStorage contains it
+            Intent getUserProfilePicFromStorage = new Intent(this, UserService.class);
+            getUserProfilePicFromStorage.setAction(UserService.LOAD_USER_PROFILE_PICTURES_FROM_DATABASE_ACTION);
+            IntentFilter intentFilter = new IntentFilter(BroadcastKey.USER_PROFILE_IMAGE_LOAD_FINISH_ACTION);
+            LocalBroadcastManager.getInstance(this).registerReceiver(new BroadcastReceiver() {
+                @Override
+                public void onReceive(Context context, Intent intent) {
+                    //Check if we were able to find a profile image
+                    if(intent.getBooleanExtra(BroadcastKey.RECEIVED_IMAGE, false)){
+                        //Image has been received from the database
+                        Bitmap userProfilePic = InternalStorage.getProfilePic(UserPageActivity.this, userId);
+                        userProfileImageView.setImageBitmap(userProfilePic);
+                    } else {
+                        //Image does not exist in both the internal storage nor the database
+
+                    }
+                }
+            }, intentFilter);
         }
 
-        //Check if user background image exists
+        //Check if user background image exists, if so, set it as the background image
         Bitmap userBackgroundPic = InternalStorage.getBackgroundPic(this, userId);
         if(userBackgroundPic != null) {
             backgroundImageView.setImageBitmap(userBackgroundPic);
             userBackgroundImageLoaded = true;
+        } else {
+
         }
+
 
 
         //Check if read permission is granted for the application to read the user's information located on their external storage

@@ -37,7 +37,6 @@ public class CreateAccountActivity extends Activity implements View.OnClickListe
     private Pattern pattern;
     private Matcher matcher;
     private final String TAG = "CreateAccountActivity";
-    private final String USER_INFO  = "user_info";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -87,11 +86,6 @@ public class CreateAccountActivity extends Activity implements View.OnClickListe
                         DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference("Users");
                         String userID = mAuth.getCurrentUser().getUid();
                         databaseReference.child(userID).setValue(new User(userEmailCreate, userFirstName + " " + userLastName));
-
-                        //Log that the user has signed in using this device
-                        SharedPreferences sharedPreferences = getSharedPreferences(USER_INFO, 0);
-                        SharedPreferences.Editor editor = sharedPreferences.edit();
-                        editor.putBoolean(userID, true);
 
                         //Start trending activity
                         Intent intent = new Intent(CreateAccountActivity.this, TrendingActivity.class);
