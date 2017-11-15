@@ -23,7 +23,8 @@
         xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:app="http://schemas.android.com/apk/res-auto"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:background="@android:color/transparent">
 
         <RelativeLayout
             android:layout_width="match_parent"
@@ -102,29 +103,32 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:background="#455A68"
-            android:gravity="center"
-            app:layout_scrollFlags="scroll|enterAlways">
-
-
-        </LinearLayout>
-        
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
             android:background="#EEEEEE"
-            android:padding="16dp"
             app:layout_scrollFlags="scroll|enterAlways">
 
-            <TextView
+            <EditText
                 android:id="@+id/profile_information_text"
+                android:layout_width="350dp"
+                android:layout_height="40dp"
+                android:layout_marginTop="8dp"
+                android:text="Introduction pH"
+                android:background="@android:color/transparent"
+                android:textSize="14dp"
+                android:inputType="none"
+                android:focusable="false"/>
+
+            <ImageButton
+                android:id="@+id/edit_introduction_button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="Introduction pH"/>
+                android:layout_gravity="right"
+                android:background="@android:color/transparent"
+                android:tint="@color/common_google_signin_btn_text_dark_focused"
+                android:src="@android:drawable/ic_menu_add"
+                android:layout_marginTop="-20dp"/>
 
         </LinearLayout>
+
 
     </android.support.design.widget.AppBarLayout>
 

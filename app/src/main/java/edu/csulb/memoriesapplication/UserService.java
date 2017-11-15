@@ -17,7 +17,6 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
-import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageException;
 import com.google.firebase.storage.StorageReference;
 
@@ -69,35 +68,88 @@ public class UserService extends IntentService {
             //Retrieves user background picture and user profile picture from the database to be displayed in the user page
             //And then stores them in the internal storage for easy and quick access
             case LOAD_USER_PROFILE_PICTURES_FROM_DATABASE_ACTION: {
-                String userId = getUserId();
-
+                Log.d(TAG, "Retrieving user profile picture from database");
+                final String userId = getUserId();
                 UserFirebaseStorage userFirebaseStorage = new UserFirebaseStorage();
-                Bitmap userProfileImage = userFirebaseStorage.getUserImage(userId, UserFirebaseStorage.ImageType.PROFILE);
 
-                Intent userImageLoadFinishedIntent = new Intent(BroadcastKey.USER_PROFILE_IMAGE_LOAD_FINISH_ACTION);
-                if (userProfileImage != null) {
-                    InternalStorage.saveImageFile(this, InternalStorage.ImageType.PROFILE, userId, userProfileImage);
-                    //Record in the intent that we were able to find a profile picture file
-                    userImageLoadFinishedIntent.putExtra(BroadcastKey.RECEIVED_IMAGE, true);
-                }
+                //Retrieves the user profile image from Storage and saves it into internal storage
+                StorageReference storageReference = userFirebaseStorage.getRootReference();
+                final long MAX_IMAGE_SIZE = 1024 * 1024 * 3;
+                String profilePicPath = userFirebaseStorage.getUserProfilePicPath(userId);
+                final Intent userImageLoadFinishedIntent = new Intent(BroadcastKey.USER_PROFILE_IMAGE_LOAD_FINISH_ACTION);
 
-                LocalBroadcastManager.getInstance(UserService.this).sendBroadcast(userImageLoadFinishedIntent);
+                storageReference.child(profilePicPath).getBytes(MAX_IMAGE_SIZE).addOnSuccessListener(new OnSuccessListener<byte[]>() {
+                    @Override
+                    public void onSuccess(byte[] bytes) {
+                        Log.d(TAG, "User profile image received from storage successfully");
+                        Bitmap image = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+                        InternalStorage.saveImageFile(UserService.this, InternalStorage.ImageType.PROFILE, userId, image);
+                        userImageLoadFinishedIntent.putExtra(BroadcastKey.RECEIVED_IMAGE,true);
+
+                        //Tell the UI Thread that the profile image has been received successfully
+                        LocalBroadcastManager.getInstance(UserService.this).sendBroadcast(userImageLoadFinishedIntent);
+                    }
+                }).addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        userImageLoadFinishedIntent.putExtra(BroadcastKey.RECEIVED_IMAGE, false);
+                        int errorCode = ((StorageException) e).getErrorCode();
+                        switch(errorCode) {
+                            case StorageException.ERROR_OBJECT_NOT_FOUND: {
+                                Log.d(TAG, "User File not found in storage.");
+                            }
+                            break;
+                            case StorageException.ERROR_CANCELED: {
+                                Log.d(TAG, "User has canceled.");
+                            }
+                            break;
+                        }
+                        LocalBroadcastManager.getInstance(UserService.this).sendBroadcast(userImageLoadFinishedIntent);
+                    }
+                });
+
             }
             break;
             case LOAD_USER_BACKGROUND_PICTURES_FROM_DATABASE_ACTION: {
-                String userId = getUserId();
-
+                Log.d(TAG, "Retrieving user profile picture from database");
+                final String userId = getUserId();
                 UserFirebaseStorage userFirebaseStorage = new UserFirebaseStorage();
-                Bitmap userBackgroundImage = userFirebaseStorage.getUserImage(userId, UserFirebaseStorage.ImageType.BACKGROUND);
 
-                Intent userImageLoadFinishedIntent = new Intent(BroadcastKey.USER_BACKGROUND_IMAGE_LOAD_FINISH_ACTION);
-                if (userBackgroundImage != null) {
-                    InternalStorage.saveImageFile(this, InternalStorage.ImageType.BACKGROUND, userId, userBackgroundImage);
-                    //Record in the intent that we were able to find a background picture file
-                    userImageLoadFinishedIntent.putExtra(BroadcastKey.RECEIVED_IMAGE, true);
-                }
+                //Retrieves the user background image from Storage and saves it into internal storage
+                StorageReference storageReference = userFirebaseStorage.getRootReference();
+                final long MAX_IMAGE_SIZE = 1024 * 1024 * 3;
+                String backgroundPicPath = userFirebaseStorage.getUserBackgroundPicPath(userId);
+                final Intent userImageLoadFinishedIntent = new Intent(BroadcastKey.USER_BACKGROUND_IMAGE_LOAD_FINISH_ACTION);
 
-                LocalBroadcastManager.getInstance(UserService.this).sendBroadcast(userImageLoadFinishedIntent);
+                storageReference.child(backgroundPicPath).getBytes(MAX_IMAGE_SIZE).addOnSuccessListener(new OnSuccessListener<byte[]>() {
+                    @Override
+                    public void onSuccess(byte[] bytes) {
+                        Log.d(TAG, "User background image received from storage successfully");
+                        Bitmap image = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+                        InternalStorage.saveImageFile(UserService.this, InternalStorage.ImageType.BACKGROUND, userId, image);
+                        userImageLoadFinishedIntent.putExtra(BroadcastKey.RECEIVED_IMAGE,true);
+
+                        //Tell the UI Thread that the background image has been received successfully
+                        LocalBroadcastManager.getInstance(UserService.this).sendBroadcast(userImageLoadFinishedIntent);
+                    }
+                }).addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        userImageLoadFinishedIntent.putExtra(BroadcastKey.RECEIVED_IMAGE, false);
+                        int errorCode = ((StorageException) e).getErrorCode();
+                        switch(errorCode) {
+                            case StorageException.ERROR_OBJECT_NOT_FOUND: {
+                                Log.d(TAG, "User File not found in storage.");
+                            }
+                            break;
+                            case StorageException.ERROR_CANCELED: {
+                                Log.d(TAG, "User has canceled.");
+                            }
+                            break;
+                        }
+                        LocalBroadcastManager.getInstance(UserService.this).sendBroadcast(userImageLoadFinishedIntent);
+                    }
+                });
             }
             break;
             //----------------------------------------------------------------------------------------------------------------------------------------------------

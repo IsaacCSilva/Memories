@@ -19,8 +19,13 @@ import android.support.design.widget.AppBarLayout;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.LocalBroadcastManager;
+import android.text.InputType;
 import android.util.Log;
 import android.view.View;
+import android.view.inputmethod.InputMethod;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -43,8 +48,9 @@ public class UserPageActivity extends Activity implements View.OnClickListener {
     private boolean readPermissionGranted;
     private CircleImageView userProfileImageView;
     private ImageView backgroundImageView;
+    private ImageButton editIntroductionButton;
     private TextView postsCountText;
-    private TextView profileInformationTextView;
+    private EditText profileInformationTextView;
     private TextView userNameTextView;
     private TextView userIdTextView;
     private View viewContainer;
@@ -61,7 +67,7 @@ public class UserPageActivity extends Activity implements View.OnClickListener {
 
         //Instantiate all of the primitive views
         postsCountText = (TextView) this.findViewById(R.id.posts_count_text);
-        profileInformationTextView = (TextView) this.findViewById(R.id.profile_information_text);
+        profileInformationTextView = (EditText) this.findViewById(R.id.profile_information_text);
         userNameTextView = (TextView) this.findViewById(R.id.user_name_text);
         userIdTextView = (TextView) this.findViewById(R.id.user_id_text);
         viewContainer = (AppBarLayout) this.findViewById(R.id.view_container);
@@ -77,6 +83,9 @@ public class UserPageActivity extends Activity implements View.OnClickListener {
         userProfileImageView.setOnClickListener(this);
         backgroundImageView = (ImageView) this.findViewById(R.id.background_image);
         backgroundImageView.setOnClickListener(this);
+        editIntroductionButton = (ImageButton) this.findViewById(R.id.edit_introduction_button);
+        editIntroductionButton.setOnClickListener(this);
+
 
         //Set the boolean values to false to let the activity only appear once everything is loaded
         userPrimitiveDataLoaded = false;
@@ -93,6 +102,8 @@ public class UserPageActivity extends Activity implements View.OnClickListener {
             //User profile image is not contained in internal storage, check if the FirebaseStorage contains it
             Intent getUserProfilePicFromStorage = new Intent(this, UserService.class);
             getUserProfilePicFromStorage.setAction(UserService.LOAD_USER_PROFILE_PICTURES_FROM_DATABASE_ACTION);
+            startService(getUserProfilePicFromStorage);
+
             IntentFilter intentFilter = new IntentFilter(BroadcastKey.USER_PROFILE_IMAGE_LOAD_FINISH_ACTION);
             LocalBroadcastManager.getInstance(this).registerReceiver(new BroadcastReceiver() {
                 @Override
@@ -102,9 +113,13 @@ public class UserPageActivity extends Activity implements View.OnClickListener {
                         //Image has been received from the database
                         Bitmap userProfilePic = InternalStorage.getProfilePic(UserPageActivity.this, userId);
                         userProfileImageView.setImageBitmap(userProfilePic);
+                        userProfileImageLoaded = true;
+                        makeViewsVisible();
                     } else {
                         //Image does not exist in both the internal storage nor the database
-
+                        //Use default values
+                        userProfileImageLoaded = true;
+                        makeViewsVisible();
                     }
                 }
             }, intentFilter);
@@ -116,7 +131,29 @@ public class UserPageActivity extends Activity implements View.OnClickListener {
             backgroundImageView.setImageBitmap(userBackgroundPic);
             userBackgroundImageLoaded = true;
         } else {
+            //User background image is not contained in internal storage, check if FirebaseStorage contains it
+            Intent getUserBackgroundPicFromStorage = new Intent(this, UserService.class);
+            getUserBackgroundPicFromStorage.setAction(UserService.LOAD_USER_BACKGROUND_PICTURES_FROM_DATABASE_ACTION);
+            startService(getUserBackgroundPicFromStorage);
 
+            IntentFilter intentFilter = new IntentFilter(BroadcastKey.USER_BACKGROUND_IMAGE_LOAD_FINISH_ACTION);
+            LocalBroadcastManager.getInstance(this).registerReceiver(new BroadcastReceiver() {
+                @Override
+                public void onReceive(Context context, Intent intent) {
+                    if(intent.getBooleanExtra(BroadcastKey.RECEIVED_IMAGE, false)){
+                        //Image has been received from the database
+                        Bitmap userBackgroundPic = InternalStorage.getBackgroundPic(UserPageActivity.this, userId);
+                        backgroundImageView.setImageBitmap(userBackgroundPic);
+                        userBackgroundImageLoaded = true;
+                        makeViewsVisible();
+                    }else {
+                        //Image does not exist in both the internal storage nor the database
+                        //Use default values
+                        userBackgroundImageLoaded = true;
+                        makeViewsVisible();
+                    }
+                }
+            }, intentFilter);
         }
 
 
@@ -136,20 +173,19 @@ public class UserPageActivity extends Activity implements View.OnClickListener {
             }
         }, intentFilter);
 
-        //Call to refresh the user's primitive data
-        refreshUserInfo();
-
     }
 
     @Override
     protected void onStart() {
         super.onStart();
+        //Call to refresh the user's primitive data everytime this activity is revisited
         refreshUserInfo();
     }
 
     @Override
     protected void onStop() {
         super.onStop();
+        //Set that the user's primitive data is no longer valid and to refresh
         userPrimitiveDataLoaded = false;
     }
 
@@ -209,6 +245,18 @@ public class UserPageActivity extends Activity implements View.OnClickListener {
                     startActivityForResult(intent, RESULT_LOAD_BACKGROUND_PIC);
                 }
             }
+            break;
+            case R.id.edit_introduction_button: {
+                profileInformationTextView.setFocusable(true);
+                profileInformationTextView.setFocusableInTouchMode(true);
+                profileInformationTextView.setClickable(true);
+                profileInformationTextView.requestFocus();
+                InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                imm.showSoftInput(profileInformationTextView, InputMethodManager.SHOW_IMPLICIT);
+
+                //Todo: Change the + button to a done or check button to save the changes and then save those changes in the database
+            }
+            break;
         }
     }
 
