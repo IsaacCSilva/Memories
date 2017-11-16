@@ -109,23 +109,43 @@
             <EditText
                 android:id="@+id/profile_information_text"
                 android:layout_width="350dp"
-                android:layout_height="40dp"
+                android:layout_height="45dp"
                 android:layout_marginTop="8dp"
                 android:text="Introduction pH"
                 android:background="@android:color/transparent"
                 android:textSize="14dp"
                 android:inputType="none"
-                android:focusable="false"/>
+                android:focusable="false"
+                android:layout_marginLeft="2dp"/>
 
-            <ImageButton
-                android:id="@+id/edit_introduction_button"
+            <FrameLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="right"
-                android:background="@android:color/transparent"
-                android:tint="@color/common_google_signin_btn_text_dark_focused"
-                android:src="@android:drawable/ic_menu_add"
-                android:layout_marginTop="-20dp"/>
+                android:layout_marginTop="-20dp"
+                android:layout_marginRight="2dp">
+
+                <ImageButton
+                    android:id="@+id/edit_introduction_button"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_gravity="right"
+                    android:background="@android:color/transparent"
+                    android:src="@android:drawable/ic_menu_edit"
+                    android:tint="@color/common_google_signin_btn_text_dark_focused"
+                    android:visibility="visible"
+                    android:clickable="true"/>
+
+                <ImageButton
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:id="@+id/save_edit_button"
+                    android:layout_gravity="right"
+                    android:visibility="gone"
+                    android:tint="@color/common_google_signin_btn_text_dark_focused"
+                    android:src="@android:drawable/ic_menu_save"
+                    android:clickable="false"/>
+            </FrameLayout>
 
         </LinearLayout>
 

@@ -15,7 +15,6 @@ import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.StorageException;
 import com.google.firebase.storage.StorageReference;
@@ -30,9 +29,11 @@ public class UserService extends IntentService {
     public final static String LOAD_USER_BACKGROUND_PICTURES_FROM_DATABASE_ACTION = "LUBPFDA";
     public final static String REFRESH_USER_PRIMITIVE_DATA_ACTION = "RUPD";
     public final static String STORE_USER_PICTURE_TO_DATABASE = "SUPTD";
+    public final static String UPDATE_USER_INTRO = "UUI";
     public final static String IMAGE_TYPE = "image_type";
     public final static String USER_IMAGE_TYPE_PROFILE = "profileImage";
     public final static String USER_IMAGE_TYPE_BACKGROUND = "backgroundImage";
+    public final static String USER_INTRODUCTION_KEY = "UIK";
     private final String TAG = "UserService";
 
 
@@ -178,8 +179,8 @@ public class UserService extends IntentService {
             case REFRESH_USER_PRIMITIVE_DATA_ACTION: {
                 final FirebaseAuth firebaseAuth = FirebaseAuth.getInstance();
                 final String userId = firebaseAuth.getCurrentUser().getUid();
-                FirebaseDatabase firebaseDatabase = FirebaseDatabase.getInstance();
-                firebaseDatabase.getReference().child(DatabaseReferenceKeys.USERS).child(userId).addListenerForSingleValueEvent(new ValueEventListener() {
+                com.google.firebase.database.FirebaseDatabase firebaseDatabase = com.google.firebase.database.FirebaseDatabase.getInstance();
+                firebaseDatabase.getReference().child(UserDatabase.USERS).child(userId).addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
                         User user = dataSnapshot.getValue(User.class);
@@ -196,7 +197,13 @@ public class UserService extends IntentService {
                 });
             }
             break;
-
+            case UPDATE_USER_INTRO: {
+                String userIntro = intent.getStringExtra(UserDatabase.USER_INTRODUCTION);
+                String userId = getUserId();
+                UserDatabase userDatabase = new UserDatabase();
+                userDatabase.updateUserIntroduction(userId, userIntro);
+            }
+            break;
         }
     }
 

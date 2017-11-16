@@ -1,7 +1,6 @@
 package edu.csulb.memoriesapplication;
 
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
@@ -28,7 +27,6 @@ import com.google.firebase.auth.GoogleAuthProvider;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 public class LoginActivity extends AppCompatActivity implements GoogleApiClient.OnConnectionFailedListener,
@@ -36,7 +34,7 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
 
     private FirebaseAuth mAuth;
     private FirebaseAuth.AuthStateListener mAuthListener;
-    private FirebaseDatabase firebaseDatabase;
+    private com.google.firebase.database.FirebaseDatabase firebaseDatabase;
     private final String TAG = "LoginActivity";
     private GoogleApiClient googleApiClient;
     private EditText userEmail;
@@ -63,7 +61,7 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
 
         //Get Firebase instances and initialize GoogleSignInOptions and google's api client
         //-----------------------------------------------------------------------------------------------------------
-        firebaseDatabase = FirebaseDatabase.getInstance();
+        firebaseDatabase = com.google.firebase.database.FirebaseDatabase.getInstance();
         mAuth = FirebaseAuth.getInstance();
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN).
                 requestIdToken(getString(R.string.default_web_client_id)).requestEmail().build();
@@ -167,7 +165,7 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
                     Log.d(TAG, "signInWithCredential:success");
 
                     //Access the database and see if the user exists
-                    final DatabaseReference databaseReference = firebaseDatabase.getReference(DatabaseReferenceKeys.USERS);
+                    final DatabaseReference databaseReference = firebaseDatabase.getReference(UserDatabase.USERS);
                     databaseReference.child(fUser.getUid()).addListenerForSingleValueEvent(new ValueEventListener() {
                         @Override
                         public void onDataChange(DataSnapshot dataSnapshot) {

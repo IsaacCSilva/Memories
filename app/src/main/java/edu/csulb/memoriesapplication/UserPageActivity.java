@@ -19,10 +19,8 @@ import android.support.design.widget.AppBarLayout;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.LocalBroadcastManager;
-import android.text.InputType;
 import android.util.Log;
 import android.view.View;
-import android.view.inputmethod.InputMethod;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -49,8 +47,9 @@ public class UserPageActivity extends Activity implements View.OnClickListener {
     private CircleImageView userProfileImageView;
     private ImageView backgroundImageView;
     private ImageButton editIntroductionButton;
+    private ImageButton saveEditButton;
     private TextView postsCountText;
-    private EditText profileInformationTextView;
+    private EditText userProfileIntroEditView;
     private TextView userNameTextView;
     private TextView userIdTextView;
     private View viewContainer;
@@ -59,6 +58,8 @@ public class UserPageActivity extends Activity implements View.OnClickListener {
     private boolean userPrimitiveDataLoaded;
     private boolean userProfileImageLoaded;
     private boolean userBackgroundImageLoaded;
+    private boolean userEditingProfileIntro;
+    private String prevUserIntro;
 
     @Override
     protected void onCreate(Bundle onSavedInstanceState) {
@@ -67,7 +68,7 @@ public class UserPageActivity extends Activity implements View.OnClickListener {
 
         //Instantiate all of the primitive views
         postsCountText = (TextView) this.findViewById(R.id.posts_count_text);
-        profileInformationTextView = (EditText) this.findViewById(R.id.profile_information_text);
+        userProfileIntroEditView = (EditText) this.findViewById(R.id.profile_information_text);
         userNameTextView = (TextView) this.findViewById(R.id.user_name_text);
         userIdTextView = (TextView) this.findViewById(R.id.user_id_text);
         viewContainer = (AppBarLayout) this.findViewById(R.id.view_container);
@@ -85,12 +86,18 @@ public class UserPageActivity extends Activity implements View.OnClickListener {
         backgroundImageView.setOnClickListener(this);
         editIntroductionButton = (ImageButton) this.findViewById(R.id.edit_introduction_button);
         editIntroductionButton.setOnClickListener(this);
+        saveEditButton = (ImageButton) this.findViewById(R.id.save_edit_button);
+        saveEditButton.setOnClickListener(this);
 
 
         //Set the boolean values to false to let the activity only appear once everything is loaded
         userPrimitiveDataLoaded = false;
         userProfileImageLoaded = false;
         userBackgroundImageLoaded = false;
+
+        //Set the boolean value for userEditingProfileIntro to false
+        //Used to control the flow and use of the back button
+        userEditingProfileIntro = false;
 
 
         //Check if user profile image exists in internal storage, if so, set it as the profile image
@@ -194,7 +201,7 @@ public class UserPageActivity extends Activity implements View.OnClickListener {
         postsCountText.setText(String.valueOf(user.userPostsCount));
         userIdTextView.setText(user.userID);
         userNameTextView.setText(user.name);
-        profileInformationTextView.setText(user.userIntro);
+        userProfileIntroEditView.setText(user.userIntro);
         userPrimitiveDataLoaded = true;
 
         //Makes sure that everything is loaded before making the views visible
@@ -247,16 +254,29 @@ public class UserPageActivity extends Activity implements View.OnClickListener {
             }
             break;
             case R.id.edit_introduction_button: {
-                profileInformationTextView.setFocusable(true);
-                profileInformationTextView.setFocusableInTouchMode(true);
-                profileInformationTextView.setClickable(true);
-                profileInformationTextView.requestFocus();
-                InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-                imm.showSoftInput(profileInformationTextView, InputMethodManager.SHOW_IMPLICIT);
-
-                //Todo: Change the + button to a done or check button to save the changes and then save those changes in the database
+                editIntroMode(true);
             }
             break;
+            case R.id.save_edit_button: {
+                editIntroMode(false);
+                //Create new intent to start service to save the new intro to the database
+                String newUserIntro = userProfileIntroEditView.getText().toString();
+                Intent intent = new Intent(this, UserService.class);
+                intent.setAction(UserService.UPDATE_USER_INTRO);
+                intent.putExtra(UserDatabase.USER_INTRODUCTION, newUserIntro);
+                startService(intent);
+            }
+            break;
+        }
+    }
+
+    @Override
+    public void onBackPressed() {
+        if(userEditingProfileIntro) {
+            editIntroMode(false);
+            userProfileIntroEditView.setText(prevUserIntro);
+        } else {
+            super.onBackPressed();
         }
     }
 
@@ -307,9 +327,55 @@ public class UserPageActivity extends Activity implements View.OnClickListener {
     }
 
     private void makeViewsVisible() {
+        //First checks to see if all of the user informations are loaded before updating the views
         if(userProfileImageLoaded && userBackgroundImageLoaded && userPrimitiveDataLoaded) {
             progressBar.setVisibility(View.GONE);
             viewContainer.setVisibility(View.VISIBLE);
+        }
+    }
+
+    private void editIntroMode(boolean onOrOff) {
+        if(onOrOff) {
+            //Save the current user intro in case they cancel
+            prevUserIntro = userProfileIntroEditView.getText().toString();
+
+            //Set the Edit Text to editable
+            userProfileIntroEditView.setFocusable(true);
+            userProfileIntroEditView.setFocusableInTouchMode(true);
+            userProfileIntroEditView.setClickable(true);
+            userProfileIntroEditView.requestFocus();
+
+            //Make the soft-keyboard appear
+            InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+            imm.showSoftInput(userProfileIntroEditView, InputMethodManager.SHOW_IMPLICIT);
+
+            //Make the edit button unclickable and also make it dissapear
+            editIntroductionButton.setClickable(false);
+            editIntroductionButton.setVisibility(View.GONE);
+
+            //Make the save icon appear instead
+            saveEditButton.setClickable(true);
+            saveEditButton.setVisibility(View.VISIBLE);
+
+            //Set that the user is currently editing their intro to modify onBackPressed
+            userEditingProfileIntro = true;
+        } else {
+            //Make the save icon dissappear
+            saveEditButton.setClickable(false);
+            saveEditButton.setVisibility(View.GONE);
+
+            //Make the edit button appear now
+            editIntroductionButton.setClickable(true);
+            editIntroductionButton.setVisibility(View.VISIBLE);
+
+            //Set the Edit Text to not be able to edit
+            userProfileIntroEditView.clearFocus();
+            userProfileIntroEditView.setFocusable(false);
+            userProfileIntroEditView.setFocusableInTouchMode(false);
+            userProfileIntroEditView.setClickable(false);
+
+            //Set that the user is no longer editing their intro to modify onBackPressed
+            userEditingProfileIntro = false;
         }
     }
 }
