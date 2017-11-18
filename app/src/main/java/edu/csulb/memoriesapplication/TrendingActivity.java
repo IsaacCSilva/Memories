@@ -8,7 +8,9 @@ import android.os.Bundle;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.transition.Slide;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.View;
 import android.widget.Button;
 import android.widget.MediaController;
@@ -44,8 +46,13 @@ public class TrendingActivity extends Activity implements View.OnClickListener{
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_trending);
 
+        //set transitions
+        setTransitions();
+
         //instantiate objects
         constraintLayout = (MyConstraintLayout)findViewById(R.id.constraintLayout);
+        constraintLayout.setLeftPage(new Intent(this, UserPageActivity.class));
+        constraintLayout.setRightPage(new Intent(this, LatestMemoriesActivity.class));
         polaroids = new ArrayList<Polaroid>();
         rvAdapter = new CardViewAdapter(this, polaroids);
         recyclerView = (RecyclerView)findViewById(R.id.recyclerView);
@@ -104,5 +111,14 @@ public class TrendingActivity extends Activity implements View.OnClickListener{
             }
             break;
         }
+    }
+
+    public void setTransitions(){
+        Slide slide = new Slide();
+        slide.setDuration(500);
+        slide.setSlideEdge(Gravity.BOTTOM);
+        getWindow().setExitTransition(null);
+        getWindow().setEnterTransition(slide);
+        getWindow().setReenterTransition(slide);
     }
 }

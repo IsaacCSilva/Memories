@@ -4,46 +4,25 @@ import android.app.Activity;
 import android.app.ActivityOptions;
 import android.content.Context;
 import android.content.Intent;
-import android.support.constraint.ConstraintLayout;
 import android.transition.Scene;
 import android.transition.Slide;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.MotionEvent;
-
-import android.app.Activity;
-import android.app.ActivityOptions;
-import android.content.Context;
-import android.content.Intent;
-import android.os.Bundle;
-import android.os.Parcelable;
-import android.support.constraint.ConstraintLayout;
-import android.transition.Scene;
-import android.transition.Slide;
-import android.transition.Transition;
-import android.transition.TransitionInflater;
-import android.transition.TransitionManager;
-import android.util.AttributeSet;
-import android.util.Log;
-import android.view.GestureDetector;
-import android.view.Gravity;
-import android.view.MotionEvent;
-import android.view.Window;
-
-import java.io.Serializable;
+import android.widget.LinearLayout;
 
 /**
- * Created by Francisco on 11/8/2017.
+ * Created by Francisco on 11/18/2017.
  */
 
-public class MyConstraintLayout extends ConstraintLayout {
+public class MyLinearLayout extends LinearLayout {
     private float deltaX;
     private Intent leftPage;
     private Intent rightPage;
     private final float SWIPE_THRESHOLD = 50;
 
-    public MyConstraintLayout(Context context, AttributeSet attrs){
+    public MyLinearLayout(Context context, AttributeSet attrs){
         super(context, attrs);
 
     }
