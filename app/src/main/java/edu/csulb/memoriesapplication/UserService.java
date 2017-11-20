@@ -33,7 +33,6 @@ public class UserService extends IntentService {
     public final static String IMAGE_TYPE = "image_type";
     public final static String USER_IMAGE_TYPE_PROFILE = "profileImage";
     public final static String USER_IMAGE_TYPE_BACKGROUND = "backgroundImage";
-    public final static String USER_INTRODUCTION_KEY = "UIK";
     private final String TAG = "UserService";
 
 
