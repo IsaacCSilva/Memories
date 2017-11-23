@@ -127,11 +127,24 @@ public class TrendingActivity extends AppCompatActivity {
 
 
     public void setTransitions() {
-        Slide slide = new Slide();
-        slide.setDuration(500);
-        slide.setSlideEdge(Gravity.BOTTOM);
+        Slide enterSlide = new Slide();
+        Slide returnSlide = new Slide();
+        enterSlide.setDuration(500);
+        enterSlide.setSlideEdge(Gravity.BOTTOM);
+        returnSlide.setDuration(500);
+        returnSlide.setSlideEdge(Gravity.START);
         getWindow().setExitTransition(null);
-        getWindow().setEnterTransition(slide);
-        getWindow().setReenterTransition(slide);
+        getWindow().setEnterTransition(enterSlide);
+        getWindow().setReenterTransition(enterSlide);
+        getWindow().setReturnTransition(returnSlide);
     }
+
+//    @Override
+//    public void onBackPressed(){
+//        super.onBackPressed();
+//        Slide slide = new Slide();
+//        slide.setDuration(500);
+//        slide.setSlideEdge(Gravity.RIGHT);
+//        getWindow().setExitTransition(slide);
+//    }
 }
