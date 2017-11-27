@@ -93,6 +93,9 @@ public class TrendingActivity extends Activity implements View.OnClickListener{
         polaroids.add(polaroid);
         polaroids.add(polaroid);
 
+
+        Button userPageButton = (Button) this.findViewById(R.id.debug_userpage_button);
+        userPageButton.setOnClickListener(this);
     }
 
     @Override
