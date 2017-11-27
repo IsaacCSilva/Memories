@@ -19,7 +19,9 @@ import android.support.design.widget.AppBarLayout;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.LocalBroadcastManager;
+import android.transition.Slide;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
@@ -60,11 +62,20 @@ public class UserPageActivity extends Activity implements View.OnClickListener {
     private boolean userBackgroundImageLoaded;
     private boolean userEditingProfileIntro;
     private String prevUserIntro;
+    private MyCoordinatorLayout coordinatorLayout;
 
     @Override
     protected void onCreate(Bundle onSavedInstanceState) {
         super.onCreate(onSavedInstanceState);
         setContentView(R.layout.activity_user_profile);
+
+        //set transitions
+        setTransitions();
+
+        //Initialize Layout
+        coordinatorLayout = (MyCoordinatorLayout) findViewById(R.id.coordinatorLayout);
+        coordinatorLayout.setLeftPage(new Intent(this, LatestMemoriesActivity.class));
+        coordinatorLayout.setRightPage(new Intent(this, TrendingActivity.class));
 
         //Instantiate all of the primitive views
         postsCountText = (TextView) this.findViewById(R.id.posts_count_text);
@@ -378,4 +389,19 @@ public class UserPageActivity extends Activity implements View.OnClickListener {
             userEditingProfileIntro = false;
         }
     }
+
+    public void setTransitions() {
+        Slide enterSlide = new Slide();
+        Slide returnSlide = new Slide();
+        enterSlide.setDuration(500);
+        enterSlide.setSlideEdge(Gravity.BOTTOM);
+        returnSlide.setDuration(500);
+        returnSlide.setSlideEdge(Gravity.START);
+        getWindow().setExitTransition(null);
+        getWindow().setEnterTransition(enterSlide);
+        getWindow().setReenterTransition(enterSlide);
+        getWindow().setReturnTransition(returnSlide);
+    }
+
+
 }

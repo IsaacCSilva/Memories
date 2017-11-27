@@ -10,4 +10,6 @@
     <string name="create_account_fname_hint">First Name</string>
     <string name="create_account_lname_hint">Last Name</string>
     <string name="post_count_text">Posts</string>
+    <string name="help_center">Help Center</string>
+    <string name="faq">FAQ</string>
 </resources>
