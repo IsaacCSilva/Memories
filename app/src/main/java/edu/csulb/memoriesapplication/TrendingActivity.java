@@ -18,6 +18,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.MediaController;
+import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.SearchView;
 import android.widget.Toast;
@@ -39,6 +40,7 @@ public class TrendingActivity extends AppCompatActivity {
     private ArrayList<Polaroid> polaroids;
     private CardViewAdapter rvAdapter;
     private MyConstraintLayout constraintLayout;
+    private ProgressBar progressBar;
 
     static final int CAM_REQUEST = 1;
 
@@ -48,16 +50,25 @@ public class TrendingActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_trending);
 
+        //get calling activity
+        Intent intent = getIntent();
+        int slideDirection = 0;
+        if(intent != null){
+            slideDirection = intent.getIntExtra("slide edge", 0);
+        }
+
         //set transitions
-        setTransitions();
+        setTransitions(slideDirection);
 
         //instantiate objects
+        progressBar = (ProgressBar) this.findViewById(R.id.progress_bar);
         constraintLayout = (MyConstraintLayout) findViewById(R.id.constraintLayout);
         constraintLayout.setLeftPage(new Intent(this, UserPageActivity.class));
         constraintLayout.setRightPage(new Intent(this, LatestMemoriesActivity.class));
         polaroids = new ArrayList<Polaroid>();
         rvAdapter = new CardViewAdapter(this, polaroids);
         recyclerView = (RecyclerView) findViewById(R.id.recyclerView);
+        recyclerView.setVisibility(View.GONE);
         linearLayoutManager = new LinearLayoutManager(this.getApplicationContext());
         recyclerView.setLayoutManager(linearLayoutManager);
         recyclerView.setAdapter(rvAdapter);
@@ -101,6 +112,9 @@ public class TrendingActivity extends AppCompatActivity {
         polaroid = new Polaroid(null, uri);
         polaroids.add(polaroid);
         polaroids.add(polaroid);
+
+        progressBar.setVisibility(View.GONE);
+        recyclerView.setVisibility(View.VISIBLE);
     }
 
     @Override
@@ -138,17 +152,27 @@ public class TrendingActivity extends AppCompatActivity {
     }
 
 
-    public void setTransitions() {
+    public void setTransitions(int slideDirection) {
+        Log.d("Slide Direction", "" +slideDirection);
         Slide enterSlide = new Slide();
-        Slide returnSlide = new Slide();
+        Slide exitSlide = new Slide();
+
         enterSlide.setDuration(500);
-        enterSlide.setSlideEdge(Gravity.BOTTOM);
-        returnSlide.setDuration(500);
-        returnSlide.setSlideEdge(Gravity.START);
-        getWindow().setExitTransition(null);
+        exitSlide.setDuration(500);
+
+        if(slideDirection == 0){
+            enterSlide.setSlideEdge(Gravity.RIGHT);
+            exitSlide.setSlideEdge(Gravity.RIGHT);
+        }
+
+        if(slideDirection == 1){
+            enterSlide.setSlideEdge(Gravity.START);
+            exitSlide.setSlideEdge(Gravity.START);
+        }
+        getWindow().setExitTransition(exitSlide);
         getWindow().setEnterTransition(enterSlide);
         getWindow().setReenterTransition(enterSlide);
-        getWindow().setReturnTransition(returnSlide);
+        getWindow().setReturnTransition(enterSlide);
     }
 
 //    @Override

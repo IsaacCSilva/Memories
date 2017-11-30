@@ -96,17 +96,21 @@ public class MyConstraintLayout extends ConstraintLayout {
         Slide slide = new Slide();
         if (deltaX > SWIPE_THRESHOLD) {
             intent = leftPage;
+            intent.putExtra("slide edge", 1);
             slide.setSlideEdge(Gravity.RIGHT);
         }
         else if(deltaX < SWIPE_THRESHOLD * -1){
             intent = rightPage;
+            intent.putExtra("slide edge", 0);
             slide.setSlideEdge(Gravity.LEFT);
         }
         if(deltaX > SWIPE_THRESHOLD || deltaX < SWIPE_THRESHOLD * -1) {
-            Activity currentActivity = (Activity) getContext();
-            currentActivity.getWindow().setExitTransition(slide);
+            if(intent != null) {
+                Activity currentActivity = (Activity) getContext();
+                currentActivity.getWindow().setExitTransition(slide);
 
-            getContext().startActivity(intent, ActivityOptions.makeSceneTransitionAnimation((Activity)getContext()).toBundle());
+                getContext().startActivity(intent, ActivityOptions.makeSceneTransitionAnimation((Activity) getContext()).toBundle());
+            }
         }
         deltaX = 0;
         return true;

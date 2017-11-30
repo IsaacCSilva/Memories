@@ -74,7 +74,6 @@ public class UserPageActivity extends Activity implements View.OnClickListener {
 
         //Initialize Layout
         coordinatorLayout = (MyCoordinatorLayout) findViewById(R.id.coordinatorLayout);
-        coordinatorLayout.setLeftPage(new Intent(this, LatestMemoriesActivity.class));
         coordinatorLayout.setRightPage(new Intent(this, TrendingActivity.class));
 
         //Instantiate all of the primitive views
@@ -392,15 +391,15 @@ public class UserPageActivity extends Activity implements View.OnClickListener {
 
     public void setTransitions() {
         Slide enterSlide = new Slide();
-        Slide returnSlide = new Slide();
+        Slide exitSlide = new Slide();
         enterSlide.setDuration(500);
-        enterSlide.setSlideEdge(Gravity.BOTTOM);
-        returnSlide.setDuration(500);
-        returnSlide.setSlideEdge(Gravity.START);
-        getWindow().setExitTransition(null);
+        enterSlide.setSlideEdge(Gravity.START);
+        exitSlide.setDuration(500);
+        exitSlide.setSlideEdge(Gravity.RIGHT);
+        getWindow().setExitTransition(exitSlide);
         getWindow().setEnterTransition(enterSlide);
         getWindow().setReenterTransition(enterSlide);
-        getWindow().setReturnTransition(returnSlide);
+        getWindow().setReturnTransition(enterSlide);
     }
 
 
