@@ -2,6 +2,8 @@ package edu.csulb.memoriesapplication;
 
 import android.app.Activity;
 import android.app.FragmentManager;
+import android.app.SearchManager;
+import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -18,6 +20,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.MediaController;
 import android.widget.RelativeLayout;
+import android.widget.SearchView;
 import android.widget.Toast;
 import android.widget.VideoView;
 
@@ -103,6 +106,15 @@ public class LatestMemoriesActivity extends Activity {
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.user_menu, menu);
+
+        // Associate searchable configuration with the SearchView
+        SearchManager searchManager = (SearchManager) getSystemService(Context.SEARCH_SERVICE);
+        SearchView searchView = (SearchView) menu.findItem(R.id.action_search).getActionView();
+
+        // Override search hint
+        searchView.setQueryHint(getResources().getString(R.string.search_hint));
+
+        searchView.setSearchableInfo(searchManager.getSearchableInfo(getComponentName()));
         return true;
     }
 
