@@ -98,6 +98,7 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
         if (currUser != null) {
             Intent intent = new Intent(this, TrendingActivity.class);
             startActivity(intent);
+            finish();
         }
     }
 

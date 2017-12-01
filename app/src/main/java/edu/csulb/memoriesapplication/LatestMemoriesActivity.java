@@ -55,8 +55,9 @@ public class LatestMemoriesActivity extends Activity {
         //instantiate objects
         progressBar = (ProgressBar) this.findViewById(R.id.progress_bar);
         constraintLayout = (MyConstraintLayout) findViewById(R.id.constraintLayout);
-        constraintLayout.setLeftPage(new Intent(this, UserPageActivity.class));
-        constraintLayout.setRightPage(new Intent(this, LatestMemoriesActivity.class));
+        Intent startNeighborActivity = new Intent(this, TrendingActivity.class);
+        startNeighborActivity.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+        constraintLayout.setLeftPage(startNeighborActivity);
         polaroids = new ArrayList<Polaroid>();
         rvAdapter = new CardViewAdapter(this, polaroids);
         recyclerView = (RecyclerView) findViewById(R.id.recyclerView);

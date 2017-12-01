@@ -74,6 +74,8 @@ public class UserPageActivity extends Activity implements View.OnClickListener {
 
         //Initialize Layout
         coordinatorLayout = (MyCoordinatorLayout) findViewById(R.id.coordinatorLayout);
+        Intent startNeighborActivity = new Intent(this, TrendingActivity.class);
+        startNeighborActivity.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
         coordinatorLayout.setRightPage(new Intent(this, TrendingActivity.class));
 
         //Instantiate all of the primitive views

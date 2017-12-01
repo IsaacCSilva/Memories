@@ -33,11 +33,11 @@ public class AddPictureTestActivity extends Activity {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == RESULT_LOAD_PROFILE_PIC && resultCode == RESULT_OK && data != null) {
             Uri selectedMedia = data.getData();
-            
-            Cursor cursor = getContentResolver().query(selectedMedia, filePath, null, null, null);
-            cursor.moveToFirst();
-            int columnIndex = cursor.getColumnIndex(filePath[0]);
-            String mediaPath = cursor.getString(columnIndex);
+
+//            Cursor cursor = getContentResolver().query(selectedMedia, filePath, null, null, null);
+//            cursor.moveToFirst();
+//            int columnIndex = cursor.getColumnIndex(filePath[0]);
+//            String mediaPath = cursor.getString(columnIndex);
 
         }
     }

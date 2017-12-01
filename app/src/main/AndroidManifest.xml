@@ -26,7 +26,8 @@
 
         </activity>
 
-        <activity android:name=".TrendingActivity">
+        <activity android:name=".TrendingActivity"
+            android:launchMode="singleTop">
             <meta-data android:name="android.app.searchable"
                 android:resource="@xml/searchable" />
         </activity>

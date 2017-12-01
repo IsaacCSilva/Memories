@@ -64,8 +64,10 @@ public class TrendingActivity extends AppCompatActivity {
         //instantiate objects
         progressBar = (ProgressBar) this.findViewById(R.id.progress_bar);
         constraintLayout = (MyConstraintLayout) findViewById(R.id.constraintLayout);
-        constraintLayout.setLeftPage(new Intent(this, UserPageActivity.class));
-        constraintLayout.setRightPage(new Intent(this, LatestMemoriesActivity.class));
+        Intent startLeftNeighborActivity = new Intent(this, UserPageActivity.class).addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+        constraintLayout.setLeftPage(startLeftNeighborActivity);
+        Intent startRightNeighborActivity = new Intent(this, LatestMemoriesActivity.class).addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+        constraintLayout.setRightPage(startRightNeighborActivity);
         polaroids = new ArrayList<Polaroid>();
         rvAdapter = new CardViewAdapter(this, polaroids);
         recyclerView = (RecyclerView) findViewById(R.id.recyclerView);
@@ -182,6 +184,12 @@ public class TrendingActivity extends AppCompatActivity {
         getWindow().setEnterTransition(enterSlide);
         getWindow().setReenterTransition(enterSlide);
         getWindow().setReturnTransition(enterSlide);
+    }
+
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        Log.d("Activity", "BACK PRESSED");
     }
 
 //    @Override
