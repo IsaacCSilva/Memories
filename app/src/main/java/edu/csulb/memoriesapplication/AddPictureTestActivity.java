@@ -18,6 +18,7 @@ public class AddPictureTestActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.test_add_media_activity);
         Button button = (Button) this.findViewById(R.id.add_picture_test_button);
         button.setOnClickListener(new View.OnClickListener() {
             @Override

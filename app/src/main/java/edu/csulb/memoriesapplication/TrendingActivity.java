@@ -32,7 +32,7 @@ import java.util.ArrayList;
  * Created by Danie on 10/16/2017.
  */
 
-public class TrendingActivity extends AppCompatActivity {
+public class TrendingActivity extends AppCompatActivity{
 
     //added
     private LinearLayoutManager linearLayoutManager;
@@ -64,7 +64,7 @@ public class TrendingActivity extends AppCompatActivity {
         //instantiate objects
         progressBar = (ProgressBar) this.findViewById(R.id.progress_bar);
         constraintLayout = (MyConstraintLayout) findViewById(R.id.constraintLayout);
-        Intent startLeftNeighborActivity = new Intent(this, UserPageActivity.class).addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+        Intent startLeftNeighborActivity = new Intent(this, AddPictureTestActivity.class).addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
         constraintLayout.setLeftPage(startLeftNeighborActivity);
         Intent startRightNeighborActivity = new Intent(this, LatestMemoriesActivity.class).addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
         constraintLayout.setRightPage(startRightNeighborActivity);
@@ -118,14 +118,6 @@ public class TrendingActivity extends AppCompatActivity {
 
         progressBar.setVisibility(View.GONE);
         recyclerView.setVisibility(View.VISIBLE);
-        Button button = (Button) this.findViewById(R.id.debug_test_button);
-        button.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(TrendingActivity.this, AddPictureTestActivity.class);
-                startActivity(intent);
-            }
-        });
     }
 
     @Override
