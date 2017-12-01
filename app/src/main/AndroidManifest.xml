@@ -26,8 +26,10 @@
 
         </activity>
 
-        <activity android:name=".TrendingActivity">
-
+        <activity android:name=".TrendingActivity"
+            android:launchMode="singleTop">
+            <meta-data android:name="android.app.searchable"
+                android:resource="@xml/searchable" />
         </activity>
 
         <activity android:name=".UserPageActivity">
@@ -35,11 +37,24 @@
         </activity>
 
         <activity android:name=".LatestMemoriesActivity">
-
+            <meta-data android:name="android.app.searchable"
+                android:resource="@xml/searchable" />
         </activity>
 
         <activity android:name=".Setting"
             android:label="Settings">
+
+        </activity>
+
+        <activity android:name=".SearchResultsActivity">
+
+            <intent-filter>
+                <action android:name="android.intent.action.SEARCH" />
+            </intent-filter>
+
+        </activity>
+
+        <activity android:name=".AddPictureTestActivity">
 
         </activity>
 

@@ -81,10 +81,12 @@ public class MyCoordinatorLayout extends android.support.design.widget.Coordinat
             slide.setSlideEdge(Gravity.LEFT);
         }
         if(deltaX > SWIPE_THRESHOLD || deltaX < SWIPE_THRESHOLD * -1) {
-            Activity currentActivity = (Activity) getContext();
-            currentActivity.getWindow().setExitTransition(slide);
+            if(intent != null) {
+                Activity currentActivity = (Activity) getContext();
+                currentActivity.getWindow().setExitTransition(slide);
 
-            getContext().startActivity(intent, ActivityOptions.makeSceneTransitionAnimation((Activity)getContext()).toBundle());
+                getContext().startActivity(intent, ActivityOptions.makeSceneTransitionAnimation((Activity) getContext()).toBundle());
+            }
         }
         deltaX = 0;
         return true;

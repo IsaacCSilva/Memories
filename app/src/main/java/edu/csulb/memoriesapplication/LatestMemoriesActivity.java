@@ -2,6 +2,8 @@ package edu.csulb.memoriesapplication;
 
 import android.app.Activity;
 import android.app.FragmentManager;
+import android.app.SearchManager;
+import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -17,7 +19,9 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.MediaController;
+import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
+import android.widget.SearchView;
 import android.widget.Toast;
 import android.widget.VideoView;
 
@@ -35,6 +39,7 @@ public class LatestMemoriesActivity extends Activity {
     private ArrayList<Polaroid> polaroids;
     private CardViewAdapter rvAdapter;
     private MyConstraintLayout constraintLayout;
+    private ProgressBar progressBar;
 
     static final int CAM_REQUEST = 1;
 
@@ -42,18 +47,21 @@ public class LatestMemoriesActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_latest);
+        setContentView(R.layout.activity_trending);
 
         //set transitions
         setTransitions();
 
         //instantiate objects
+        progressBar = (ProgressBar) this.findViewById(R.id.progress_bar);
         constraintLayout = (MyConstraintLayout) findViewById(R.id.constraintLayout);
-        constraintLayout.setLeftPage(new Intent(this, TrendingActivity.class));
-        constraintLayout.setRightPage(new Intent(this, UserPageActivity.class));
+        Intent startNeighborActivity = new Intent(this, TrendingActivity.class);
+        startNeighborActivity.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+        constraintLayout.setLeftPage(startNeighborActivity);
         polaroids = new ArrayList<Polaroid>();
         rvAdapter = new CardViewAdapter(this, polaroids);
         recyclerView = (RecyclerView) findViewById(R.id.recyclerView);
+        recyclerView.setVisibility(View.GONE);
         linearLayoutManager = new LinearLayoutManager(this.getApplicationContext());
         recyclerView.setLayoutManager(linearLayoutManager);
         recyclerView.setAdapter(rvAdapter);
@@ -97,12 +105,25 @@ public class LatestMemoriesActivity extends Activity {
         polaroid = new Polaroid(null, uri);
         polaroids.add(polaroid);
         polaroids.add(polaroid);
+
+        progressBar.setVisibility(View.GONE);
+        recyclerView.setVisibility(View.VISIBLE);
+
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.user_menu, menu);
+
+        // Associate searchable configuration with the SearchView
+        SearchManager searchManager = (SearchManager) getSystemService(Context.SEARCH_SERVICE);
+        SearchView searchView = (SearchView) menu.findItem(R.id.action_search).getActionView();
+
+        // Override search hint
+        searchView.setQueryHint(getResources().getString(R.string.search_hint));
+
+        searchView.setSearchableInfo(searchManager.getSearchableInfo(getComponentName()));
         return true;
     }
 
@@ -127,16 +148,17 @@ public class LatestMemoriesActivity extends Activity {
 
     public void setTransitions() {
         Slide enterSlide = new Slide();
-        Slide returnSlide = new Slide();
+        Slide exitSlide = new Slide();
         enterSlide.setDuration(500);
-        enterSlide.setSlideEdge(Gravity.BOTTOM);
-        returnSlide.setDuration(500);
-        returnSlide.setSlideEdge(Gravity.START);
-        getWindow().setExitTransition(null);
+        enterSlide.setSlideEdge(Gravity.RIGHT);
+        exitSlide.setDuration(500);
+        exitSlide.setSlideEdge(Gravity.START);
+        getWindow().setExitTransition(exitSlide);
         getWindow().setEnterTransition(enterSlide);
         getWindow().setReenterTransition(enterSlide);
-        getWindow().setReturnTransition(returnSlide);
+        getWindow().setReturnTransition(enterSlide);
     }
+
 
 //    @Override
 //    public void onBackPressed(){
