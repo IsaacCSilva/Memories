@@ -8,6 +8,7 @@ import android.os.Bundle;
 import android.provider.MediaStore;
 import android.view.View;
 import android.widget.Button;
+import android.widget.Toast;
 
 /**
  * Created by Daniel on 11/30/2017.
@@ -24,6 +25,7 @@ public class AddPictureTestActivity extends Activity {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+                intent.setType("image/* video/*");
                 startActivityForResult(intent, RESULT_LOAD_PROFILE_PIC);
             }
         });
@@ -34,6 +36,11 @@ public class AddPictureTestActivity extends Activity {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == RESULT_LOAD_PROFILE_PIC && resultCode == RESULT_OK && data != null) {
             Uri selectedMedia = data.getData();
+            if(selectedMedia.toString().contains("image")){
+                Toast.makeText(this, "Image", Toast.LENGTH_SHORT).show();
+            } else if (selectedMedia.toString().contains("video")) {
+                Toast.makeText(this, "Video", Toast.LENGTH_SHORT).show();
+            }
 
 //            Cursor cursor = getContentResolver().query(selectedMedia, filePath, null, null, null);
 //            cursor.moveToFirst();
