@@ -16,4 +16,8 @@ public class UserDatabase {
         DatabaseReference userIntroReference = databaseReference.child(userId).child("userIntro");
         userIntroReference.setValue(introduction);
     }
+
+    public void addUserMedia(String userId, String URI) {
+
+    }
 }

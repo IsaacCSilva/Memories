@@ -3,6 +3,8 @@ package edu.csulb.memoriesapplication;
 import android.app.Activity;
 import android.content.Intent;
 import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -15,7 +17,7 @@ import android.widget.Toast;
  */
 
 public class AddPictureTestActivity extends Activity {
-    private final static int RESULT_LOAD_PROFILE_PIC = 0;
+    private final static int RESULT_LOAD_MEDIA = 0;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -24,9 +26,10 @@ public class AddPictureTestActivity extends Activity {
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                //Starts the activity to load in the images from the gallery
                 Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
                 intent.setType("image/* video/*");
-                startActivityForResult(intent, RESULT_LOAD_PROFILE_PIC);
+                startActivityForResult(intent, RESULT_LOAD_MEDIA);
             }
         });
     }
@@ -34,13 +37,20 @@ public class AddPictureTestActivity extends Activity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == RESULT_LOAD_PROFILE_PIC && resultCode == RESULT_OK && data != null) {
+        if (requestCode == RESULT_LOAD_MEDIA && resultCode == RESULT_OK && data != null) {
             Uri selectedMedia = data.getData();
+            String[] filePath = {MediaStore.Images.Media.DATA};
+            Cursor cursor = getContentResolver().query(selectedMedia, filePath, null, null, null);
+            cursor.moveToFirst();
+            int columnIndex = cursor.getColumnIndex(filePath[0]);
+            String mediaPath = cursor.getString(columnIndex);
+            //Media Received, check if it is an image or a video
             if(selectedMedia.toString().contains("image")){
-                Toast.makeText(this, "Image", Toast.LENGTH_SHORT).show();
+                Bitmap userMedia = BitmapFactory.decodeFile(mediaPath);
             } else if (selectedMedia.toString().contains("video")) {
                 Toast.makeText(this, "Video", Toast.LENGTH_SHORT).show();
             }
+
 
 //            Cursor cursor = getContentResolver().query(selectedMedia, filePath, null, null, null);
 //            cursor.moveToFirst();
