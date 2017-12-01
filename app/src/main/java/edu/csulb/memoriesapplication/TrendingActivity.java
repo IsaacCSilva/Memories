@@ -17,6 +17,7 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Button;
 import android.widget.MediaController;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
@@ -115,6 +116,14 @@ public class TrendingActivity extends AppCompatActivity {
 
         progressBar.setVisibility(View.GONE);
         recyclerView.setVisibility(View.VISIBLE);
+        Button button = (Button) this.findViewById(R.id.debug_test_button);
+        button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(TrendingActivity.this, AddPictureTestActivity.class);
+                startActivity(intent);
+            }
+        });
     }
 
     @Override

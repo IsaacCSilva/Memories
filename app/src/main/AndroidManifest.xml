@@ -53,6 +53,10 @@
 
         </activity>
 
+        <activity android:name=".AddPictureTestActivity">
+
+        </activity>
+
         <service android:name=".UserService">
 
         </service>
