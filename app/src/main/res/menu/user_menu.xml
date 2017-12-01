@@ -4,7 +4,7 @@
     tools:context="edu.csulb.memoriesapplication.TrendingActivity">
     <item
         android:id="@+id/action_cam"
-        android:title="@string/action_settings"
+        android:title="@string/action_camera"
         android:icon="@drawable/ic_add_a_photo_white_24dp"
         app:showAsAction="ifRoom"
         android:orderInCategory="01"/>
