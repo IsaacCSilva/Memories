@@ -12,6 +12,8 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
+import java.io.ByteArrayOutputStream;
+
 /**
  * Created by Daniel on 11/30/2017.
  */
@@ -46,7 +48,9 @@ public class AddPictureTestActivity extends Activity {
             String mediaPath = cursor.getString(columnIndex);
             //Media Received, check if it is an image or a video
             if(selectedMedia.toString().contains("image")){
-                Bitmap userMedia = BitmapFactory.decodeFile(mediaPath);
+                Bitmap image = BitmapFactory.decodeFile(mediaPath);
+                FirebaseMediaStorage firebaseMediaStorage = new FirebaseMediaStorage();
+                firebaseMediaStorage.saveImageToFirebaseStorage(image);
             } else if (selectedMedia.toString().contains("video")) {
                 Toast.makeText(this, "Video", Toast.LENGTH_SHORT).show();
             }
