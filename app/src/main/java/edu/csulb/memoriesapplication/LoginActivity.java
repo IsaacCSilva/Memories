@@ -94,12 +94,6 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
     protected void onStart() {
         super.onStart();
         mAuth.addAuthStateListener(mAuthListener);
-        FirebaseUser currUser = mAuth.getCurrentUser();
-        if (currUser != null) {
-            Intent intent = new Intent(this, TrendingActivity.class);
-            startActivity(intent);
-            finish();
-        }
     }
 
     @Override
