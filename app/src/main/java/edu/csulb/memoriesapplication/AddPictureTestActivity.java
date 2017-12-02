@@ -10,9 +10,9 @@ import android.os.Bundle;
 import android.provider.MediaStore;
 import android.view.View;
 import android.widget.Button;
-import android.widget.Toast;
 
-import java.io.ByteArrayOutputStream;
+import com.google.firebase.auth.FirebaseAuth;
+
 
 /**
  * Created by Daniel on 11/30/2017.
@@ -20,10 +20,13 @@ import java.io.ByteArrayOutputStream;
 
 public class AddPictureTestActivity extends Activity {
     private final static int RESULT_LOAD_MEDIA = 0;
+    private String userId;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.test_add_media_activity);
+        FirebaseAuth firebaseAuth = FirebaseAuth.getInstance();
+        userId = firebaseAuth.getCurrentUser().getUid();
         Button button = (Button) this.findViewById(R.id.add_picture_test_button);
         button.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -41,25 +44,13 @@ public class AddPictureTestActivity extends Activity {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == RESULT_LOAD_MEDIA && resultCode == RESULT_OK && data != null) {
             Uri selectedMedia = data.getData();
-            String[] filePath = {MediaStore.Images.Media.DATA};
-            Cursor cursor = getContentResolver().query(selectedMedia, filePath, null, null, null);
-            cursor.moveToFirst();
-            int columnIndex = cursor.getColumnIndex(filePath[0]);
-            String mediaPath = cursor.getString(columnIndex);
+            FirebaseMediaStorage firebaseMediaStorage = new FirebaseMediaStorage();
             //Media Received, check if it is an image or a video
             if(selectedMedia.toString().contains("image")){
-                Bitmap image = BitmapFactory.decodeFile(mediaPath);
-                FirebaseMediaStorage firebaseMediaStorage = new FirebaseMediaStorage();
-                firebaseMediaStorage.saveImageToFirebaseStorage(image);
+                firebaseMediaStorage.saveImageToFirebaseStorage(this, selectedMedia, userId);
             } else if (selectedMedia.toString().contains("video")) {
-                Toast.makeText(this, "Video", Toast.LENGTH_SHORT).show();
+                firebaseMediaStorage.saveVideoToFirebaseStorage(selectedMedia, userId);
             }
-
-
-//            Cursor cursor = getContentResolver().query(selectedMedia, filePath, null, null, null);
-//            cursor.moveToFirst();
-//            int columnIndex = cursor.getColumnIndex(filePath[0]);
-//            String mediaPath = cursor.getString(columnIndex);
 
         }
     }
