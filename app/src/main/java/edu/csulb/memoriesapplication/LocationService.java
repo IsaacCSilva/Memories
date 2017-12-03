@@ -29,6 +29,7 @@ import java.util.Locale;
 public class LocationService extends IntentService {
 
     private FusedLocationProviderClient mFusedLocationClient;
+    private String mCity;
     private String mState;
     private Double mLatitude;
     private Double mLongitude;
@@ -67,10 +68,11 @@ public class LocationService extends IntentService {
                             if (location != null){
                                 mLongitude = location.getLongitude();
                                 mLatitude = location.getLatitude();
-                                // Reverse geocoding to get state
+                                // Reverse geocoding to get city and state
                                 Geocoder geocoder = new Geocoder(LocationService.this, Locale.getDefault());
                                 try{
                                     List<Address> address = geocoder.getFromLocation(mLatitude, mLongitude, 1);
+                                    mCity = address.get(0).getLocality();
                                     mState = address.get(0).getAdminArea();
                                     sendMessageToActivity();
 
@@ -89,6 +91,7 @@ public class LocationService extends IntentService {
         Intent intent = new Intent("finishedLocation");
         intent.putExtra("latitude", mLatitude);
         intent.putExtra("longitude", mLongitude);
+        intent.putExtra("city", mCity);
         intent.putExtra("state",mState);
         LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
     }

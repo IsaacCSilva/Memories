@@ -1,13 +1,13 @@
 package edu.csulb.memoriesapplication;
 
-import android.app.Activity;
 import android.app.SearchManager;
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.provider.MediaStore;
+import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.LinearLayoutManager;
@@ -20,7 +20,6 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
-import android.widget.ImageView;
 import android.widget.MediaController;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
@@ -32,7 +31,11 @@ import android.widget.VideoView;
 import com.google.android.exoplayer2.SimpleExoPlayer;
 import com.google.android.exoplayer2.ui.SimpleExoPlayerView;
 
+import java.io.File;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 
 /**
  * Created by Danie on 10/16/2017.
@@ -48,9 +51,10 @@ public class TrendingActivity extends AppCompatActivity{
     private CardViewAdapter rvAdapter;
     private MyConstraintLayout constraintLayout;
     private ProgressBar progressBar;
-    private ImageView ivImage;
 
-    static final int CAM_REQUEST = 1;
+    static final int REQUEST_TAKE_PHOTO = 1;
+
+    String mCurrentPhotoPath;
 
 
     @Override
@@ -70,7 +74,6 @@ public class TrendingActivity extends AppCompatActivity{
 
         //instantiate objects
         progressBar = (ProgressBar) this.findViewById(R.id.progress_bar);
-        ivImage = (ImageView) this.findViewById(R.id.ivImage);
         constraintLayout = (MyConstraintLayout) findViewById(R.id.constraintLayout);
         Intent startLeftNeighborActivity = new Intent(this, AddPictureTestActivity.class).addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
         constraintLayout.setLeftPage(startLeftNeighborActivity);
@@ -154,41 +157,64 @@ public class TrendingActivity extends AppCompatActivity{
                 return true;
             }
             case R.id.action_cam: {
-                Intent camera_intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-                startActivityForResult(camera_intent, CAM_REQUEST);
+                dispatchTakePictureIntent();
                 return true;
             }
         }
         return super.onOptionsItemSelected(items);
     }
 
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) { // this should start the activity for the image after the camer is called and image is captured
-        super.onActivityResult(resultCode, resultCode, data);
-        if (resultCode == Activity.RESULT_OK) {  // If it camera is used
-            if (resultCode == CAM_REQUEST) {
-                /*
-                imageView.buildDrawingCache();
-Bitmap image= imageView.getDrawingCache();
-
- Bundle extras = new Bundle();
-extras.putParcelable("imagebitmap", image);
-intent.putExtras(extras);
-startActivity(intent);
-
-
-Bundle extras = getIntent().getExtras();
-Bitmap bmp = (Bitmap) extras.getParcelable("imagebitmap");
-
-image.setImageBitmap(bmp );
-                 */  // alternative
-                Bundle bundle = data.getExtras();  // puts it in a"bundle" in terms of the image
-                 data = new Intent(TrendingActivity.this,ImageShow.class); // sends to the image activity
-                final Bitmap bmp = (Bitmap) bundle.get("data");   // send it in bits like it should with the intent "data"
-                ivImage.setImageBitmap(bmp); //setting the image
+    private void dispatchTakePictureIntent() {
+        Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        // Ensure that there's a camera activity to handle the intent
+        if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
+            // Create the File where the photo should go
+            File photoFile = null;
+            try {
+                photoFile = createImageFile();
+            } catch (IOException ex) {
+                // Error occurred while creating the File
+            }
+            // Continue only if the File was successfully created
+            if (photoFile != null) {
+                Uri photoURI = FileProvider.getUriForFile(this,
+                        "com.example.android.fileprovider",
+                        photoFile);
+                takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
+                startActivityForResult(takePictureIntent, REQUEST_TAKE_PHOTO);
             }
         }
     }
+
+    private File createImageFile() throws IOException {
+        // Create an image file name
+        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+        String imageFileName = "JPEG_" + timeStamp + "_";
+        File storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+        File image = File.createTempFile(
+                imageFileName,  /* prefix */
+                ".jpg",         /* suffix */
+                storageDir      /* directory */
+        );
+
+        // Save a file: path for use with ACTION_VIEW intents
+        mCurrentPhotoPath = image.getAbsolutePath();
+        return image;
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
+        if (requestCode == REQUEST_TAKE_PHOTO && resultCode == RESULT_OK) {
+            Intent sendIntent = new Intent(TrendingActivity.this, DisplayActivity.class);
+
+            sendIntent.putExtra("filepath", mCurrentPhotoPath);
+
+            startActivity(sendIntent);
+        }
+    }
+
+
+
 
     public void setTransitions(int slideDirection) {
         Log.d("Slide Direction", "" +slideDirection);

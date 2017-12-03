@@ -3,9 +3,11 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/MemoriesApplication.iml" filepath="$PROJECT_DIR$/MemoriesApplication.iml" />
+      <module fileurl="file://C:\Users\Brian\AndroidStudioProjects\MemoriesApplication\MemoriesApplication.iml" filepath="C:\Users\Brian\AndroidStudioProjects\MemoriesApplication\MemoriesApplication.iml" />
       <module fileurl="file://C:\Users\Isaac S\D\GitHub\MemoriesApplication\MemoriesApplication.iml" filepath="C:\Users\Isaac S\D\GitHub\MemoriesApplication\MemoriesApplication.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
       <module fileurl="file://C:\Users\Isaac S\D\GitHub\MemoriesApplication\app\app.iml" filepath="C:\Users\Isaac S\D\GitHub\MemoriesApplication\app\app.iml" />
+      <module fileurl="file://C:\Users\Brian\AndroidStudioProjects\MemoriesApplication\app\app.iml" filepath="C:\Users\Brian\AndroidStudioProjects\MemoriesApplication\app\app.iml" />
     </modules>
   </component>
 </project>
