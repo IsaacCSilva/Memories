@@ -15,7 +15,6 @@ import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
 import java.io.ByteArrayOutputStream;
-import java.util.ArrayList;
 import java.util.UUID;
 
 /**
@@ -62,10 +61,9 @@ public class FirebaseMediaStorage {
                 //Successful upload, get download URL to reference from user's database and global database
                 UserDatabase userDatabase = new UserDatabase();
                 //Adds the media URL to the user's database account
-                userDatabase.addMediaUrl(userId, downloadUri);
+                userDatabase.addMediaUrl(userId, downloadUri, UserDatabase.MediaType.IMAGE);
                 //Adds the media URl to the global database
-                GlobalDatabase globalDatabase = new GlobalDatabase();
-                globalDatabase.addMediaUrl(downloadUri);
+                GlobalDatabase.addMediaUrl(downloadUri, GlobalDatabase.MediaType.IMAGE);
             }
         }).addOnFailureListener(new OnFailureListener() {
             @Override
@@ -87,10 +85,9 @@ public class FirebaseMediaStorage {
                 //Successful upload, get download URL to reference from user's database and global database
                 UserDatabase userDatabase = new UserDatabase();
                 //Adds the media URL to the user's database account
-                userDatabase.addMediaUrl(userId, downloadUri);
+                userDatabase.addMediaUrl(userId, downloadUri, UserDatabase.MediaType.VIDEO);
                 //Adds the media URl to the global database
-                GlobalDatabase globalDatabase = new GlobalDatabase();
-                globalDatabase.addMediaUrl(downloadUri);
+                GlobalDatabase.addMediaUrl(downloadUri, GlobalDatabase.MediaType.VIDEO);
             }
         }).addOnFailureListener(new OnFailureListener() {
             @Override
@@ -98,16 +95,6 @@ public class FirebaseMediaStorage {
                 e.printStackTrace();
             }
         });
-    }
-
-    //Retrieves a list of url links and returns null for an empty string
-    public ArrayList<Uri> getLatestUrlList() {
-        ArrayList<Uri> urlList = new ArrayList<>();
-
-        if(urlList.size() == 0) {
-            return null;
-        }
-        return urlList;
     }
 
 }

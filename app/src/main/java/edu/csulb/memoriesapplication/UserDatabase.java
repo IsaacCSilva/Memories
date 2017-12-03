@@ -13,6 +13,12 @@ public class UserDatabase {
     final static String USER_INTRODUCTION = "USER_INTRODUCTION";
     private final static String USER_MEDIA_LIST = "mediaList";
     private final String USER_URL_KEY = "url";
+    private final String USER_MEDIA_TYPE_KEY = "mediaType";
+
+    public enum MediaType{
+        IMAGE,
+        VIDEO
+    }
 
     void updateUserIntroduction(String userId, String introduction) {
         DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference(USERS);
@@ -20,9 +26,14 @@ public class UserDatabase {
         userIntroReference.setValue(introduction);
     }
 
-    void addMediaUrl(String userId, Uri uri) {
+    void addMediaUrl(String userId, Uri uri, MediaType mediaType) {
         DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference(USERS);
         DatabaseReference userMediaListReference = databaseReference.child(userId).child(USER_MEDIA_LIST).push();
         userMediaListReference.child(USER_URL_KEY).setValue(uri.toString());
+        if(mediaType == MediaType.IMAGE) {
+            userMediaListReference.child(USER_MEDIA_TYPE_KEY).setValue("image");
+        } else {
+            userMediaListReference.child(USER_MEDIA_TYPE_KEY).setValue("video");
+        }
     }
 }

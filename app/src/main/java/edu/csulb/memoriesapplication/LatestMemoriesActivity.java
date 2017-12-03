@@ -25,7 +25,16 @@ import android.widget.SearchView;
 import android.widget.Toast;
 import android.widget.VideoView;
 
+import com.google.firebase.database.ChildEventListener;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.Query;
+
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+
+import javax.microedition.khronos.opengles.GL;
 
 /**
  * Created by Danie on 10/16/2017.
@@ -40,8 +49,47 @@ public class LatestMemoriesActivity extends Activity {
     private CardViewAdapter rvAdapter;
     private MyConstraintLayout constraintLayout;
     private ProgressBar progressBar;
-
+    private Query urlQuery;
+    private ArrayDeque<String> urlList;
     static final int CAM_REQUEST = 1;
+    private String TAG = "LastestMemoriesActivity";
+
+    //Listener that is attached to the query
+    ChildEventListener childEventListener = new ChildEventListener() {
+        @Override
+        public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+            //Receive the url string and store it in a list
+            String urlString = (String) dataSnapshot.child(GlobalDatabase.getUrlKey()).getValue();
+            String mediaType = (String) dataSnapshot.child(GlobalDatabase.getMediaTypeKey()).getValue();
+            if(mediaType.charAt(0) == 'i'){
+                urlString = urlString + 'i';
+            } else if(mediaType.charAt(0) == 'v') {
+                urlString = urlString + 'v';
+            }
+            urlList.add(urlString);
+            Log.d(TAG, urlString);
+        }
+
+        @Override
+        public void onChildChanged(DataSnapshot dataSnapshot, String s) {
+
+        }
+
+        @Override
+        public void onChildRemoved(DataSnapshot dataSnapshot) {
+
+        }
+
+        @Override
+        public void onChildMoved(DataSnapshot dataSnapshot, String s) {
+
+        }
+
+        @Override
+        public void onCancelled(DatabaseError databaseError) {
+
+        }
+    };
 
 
     @Override
@@ -51,6 +99,9 @@ public class LatestMemoriesActivity extends Activity {
 
         //set transitions
         setTransitions();
+
+        //Initialize the query
+        initializeQuery();
 
         //instantiate objects
         progressBar = (ProgressBar) this.findViewById(R.id.progress_bar);
@@ -159,13 +210,20 @@ public class LatestMemoriesActivity extends Activity {
         getWindow().setReturnTransition(enterSlide);
     }
 
+    //Retrieves a list of url links and returns null for an empty list
+    private void initializeQuery() {
+        //Creates a reference for the location where every media link is stored ordered by time
+        DatabaseReference databaseReference = GlobalDatabase.getMediaListReference();
+        //Set the maximum amount of queries to be received at once
+        int maxQuerySize = 30;
+        //Initialize the query located as a private class variable
+        urlQuery = databaseReference.limitToFirst(maxQuerySize);
+        /*
+        Attach a listener so that if any more media links are added to the database,
+        they will be added to the top of the array list stack*/
+        urlQuery.addChildEventListener(childEventListener);
+        //Initialize the ArrayList to hold the url strings
+        urlList = new ArrayDeque<>(maxQuerySize);
+    }
 
-//    @Override
-//    public void onBackPressed(){
-//        Slide slide = new Slide();
-//        slide.setDuration(500);
-//        slide.setSlideEdge(Gravity.LEFT);
-//        getWindow().setExitTransition(slide);
-//        super.onBackPressed();
-//    }
 }
