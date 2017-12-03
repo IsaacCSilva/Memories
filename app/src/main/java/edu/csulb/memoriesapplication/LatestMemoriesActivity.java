@@ -25,6 +25,8 @@ import android.widget.SearchView;
 import android.widget.Toast;
 import android.widget.VideoView;
 
+import com.google.android.exoplayer2.SimpleExoPlayer;
+import com.google.android.exoplayer2.ui.SimpleExoPlayerView;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -52,7 +54,7 @@ public class LatestMemoriesActivity extends Activity {
     private Query urlQuery;
     private ArrayDeque<String> urlList;
     static final int CAM_REQUEST = 1;
-    private String TAG = "LastestMemoriesActivity";
+    private String TAG = "LatestMemoriesActivity";
 
     //Listener that is attached to the query
     ChildEventListener childEventListener = new ChildEventListener() {
@@ -67,6 +69,8 @@ public class LatestMemoriesActivity extends Activity {
                 urlString = urlString + 'v';
             }
             urlList.add(urlString);
+            loadPolaroids();
+            rvAdapter.notifyDataSetChanged();
             Log.d(TAG, urlString);
         }
 
@@ -121,15 +125,16 @@ public class LatestMemoriesActivity extends Activity {
             public void onScrollChange(View v, int scrollX, int scrollY, int oldScrollX, int oldScrollY) {
                 int position1 = ((LinearLayoutManager) recyclerView.getLayoutManager()).findFirstCompletelyVisibleItemPosition();
                 int position2 = ((LinearLayoutManager) recyclerView.getLayoutManager()).findFirstVisibleItemPosition();
-                Log.d("first completely visible item position", "" + position1);
+                Log.d("Latest Memories/first completely visible item position", "" + position1);
                 if (position1 != -1) {
                     View view = (View) ((LinearLayoutManager) recyclerView.getLayoutManager()).findViewByPosition(position1);
                     if (view instanceof CardView) {
                         Log.d("View is of type", "CardView");
                         View childView = (View) ((CardView) view).getChildAt(0);
                         if (childView instanceof RelativeLayout) {
-                            VideoView videoView = (VideoView) ((RelativeLayout) childView).getChildAt(0);
-                            videoView.start();
+                            SimpleExoPlayerView videoView = (SimpleExoPlayerView) ((RelativeLayout) childView).getChildAt(0);
+                            SimpleExoPlayer simpleExoPlayer = videoView.getPlayer();
+                            simpleExoPlayer.setPlayWhenReady(true);
                         }
                     }
                     if (position2 != -1 && position2 != position1) {
@@ -137,25 +142,24 @@ public class LatestMemoriesActivity extends Activity {
                         View view2 = (View) ((LinearLayoutManager) recyclerView.getLayoutManager()).findViewByPosition(position2);
                         View childView = (View) ((CardView) view2).getChildAt(0);
                         if (childView instanceof RelativeLayout) {
-                            VideoView videoView = (VideoView) ((RelativeLayout) childView).getChildAt(0);
-                            if (videoView.isPlaying()) {
-                                videoView.pause();
-                            }
+                            SimpleExoPlayerView videoView = (SimpleExoPlayerView) ((RelativeLayout) childView).getChildAt(0);
+                            SimpleExoPlayer simpleExoPlayer = videoView.getPlayer();
+                            simpleExoPlayer.setPlayWhenReady(true);
                         }
                     }
                 }
             }
         });
 
-        Uri uri = Uri.parse("http://webm.land/media/Qn8D.webm");
-        Polaroid polaroid = new Polaroid(uri, null);
-
-        polaroids.add(polaroid);
-
-        uri = Uri.parse("http://i646.photobucket.com/albums/uu187/jess_roces/animal11.jpg");
-        polaroid = new Polaroid(null, uri);
-        polaroids.add(polaroid);
-        polaroids.add(polaroid);
+//        Uri uri = Uri.parse("http://webm.land/media/Qn8D.webm");
+//        Polaroid polaroid = new Polaroid(uri, null);
+//
+//        polaroids.add(polaroid);
+//
+//        uri = Uri.parse("http://i646.photobucket.com/albums/uu187/jess_roces/animal11.jpg");
+//        polaroid = new Polaroid(null, uri);
+//        polaroids.add(polaroid);
+//        polaroids.add(polaroid);
 
         progressBar.setVisibility(View.GONE);
         recyclerView.setVisibility(View.VISIBLE);
@@ -224,6 +228,31 @@ public class LatestMemoriesActivity extends Activity {
         urlQuery.addChildEventListener(childEventListener);
         //Initialize the ArrayList to hold the url strings
         urlList = new ArrayDeque<>(maxQuerySize);
+    }
+
+    private void loadPolaroids(){
+        String combinedString;
+        String uriString;
+        char uriType;
+        int size = urlList.size();
+        Log.d("urlList size", "" + size);
+
+        for(int i = 0; i < size; i++){
+            combinedString = urlList.poll();
+            Log.d("Combined String", combinedString);
+            uriString = combinedString.substring(0, combinedString.length() - 2);
+            Log.d("uriString", uriString);
+            uriType = combinedString.charAt(combinedString.length() -1);
+            Log.d("uriType", ""+ uriType);
+            if(uriType == 'i'){
+                polaroids.add(new Polaroid(null, Uri.parse(uriString)));
+            }
+            else if(uriType == 'v'){
+                Log.d("Latest loadPolaroid()", "loading video");
+                polaroids.add(new Polaroid(Uri.parse(uriString), null));
+            }
+        }
+
     }
 
 }

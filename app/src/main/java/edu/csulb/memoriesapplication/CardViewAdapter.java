@@ -108,7 +108,7 @@ public class CardViewAdapter extends RecyclerView.Adapter<CardViewAdapter.CardVi
                 dataSourceFactory, extractorsFactory, null, null);
         // Prepare the player with the source.
         simpleExoPlayer.prepare(videoSource);
-        videoView.hideController();
+        videoView.setUseController(false);
         rv.addView(videoView);
         rv.setBackgroundColor(Color.BLACK);
         cardView.addView(rv);
@@ -191,7 +191,7 @@ public class CardViewAdapter extends RecyclerView.Adapter<CardViewAdapter.CardVi
 
             localFile = null;
             try {
-                localFile = File.createTempFile("video", ".mp4");
+                localFile = File.createTempFile("video", "");
             } catch (IOException e) {
                 e.printStackTrace();
             }

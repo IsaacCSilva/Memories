@@ -26,6 +26,9 @@ import android.widget.Toast;
 import android.widget.VideoView;
 
 
+import com.google.android.exoplayer2.SimpleExoPlayer;
+import com.google.android.exoplayer2.ui.SimpleExoPlayerView;
+
 import java.util.ArrayList;
 
 /**
@@ -80,15 +83,16 @@ public class TrendingActivity extends AppCompatActivity{
             public void onScrollChange(View v, int scrollX, int scrollY, int oldScrollX, int oldScrollY) {
                 int position1 = ((LinearLayoutManager) recyclerView.getLayoutManager()).findFirstCompletelyVisibleItemPosition();
                 int position2 = ((LinearLayoutManager) recyclerView.getLayoutManager()).findFirstVisibleItemPosition();
-                Log.d("first completely visible item position", "" + position1);
+                Log.d("Latest Memories/first completely visible item position", "" + position1);
                 if (position1 != -1) {
                     View view = (View) ((LinearLayoutManager) recyclerView.getLayoutManager()).findViewByPosition(position1);
                     if (view instanceof CardView) {
                         Log.d("View is of type", "CardView");
                         View childView = (View) ((CardView) view).getChildAt(0);
                         if (childView instanceof RelativeLayout) {
-                            VideoView videoView = (VideoView) ((RelativeLayout) childView).getChildAt(0);
-                            videoView.start();
+                            SimpleExoPlayerView videoView = (SimpleExoPlayerView) ((RelativeLayout) childView).getChildAt(0);
+                            SimpleExoPlayer simpleExoPlayer = videoView.getPlayer();
+                            simpleExoPlayer.setPlayWhenReady(true);
                         }
                     }
                     if (position2 != -1 && position2 != position1) {
@@ -96,25 +100,24 @@ public class TrendingActivity extends AppCompatActivity{
                         View view2 = (View) ((LinearLayoutManager) recyclerView.getLayoutManager()).findViewByPosition(position2);
                         View childView = (View) ((CardView) view2).getChildAt(0);
                         if (childView instanceof RelativeLayout) {
-                            VideoView videoView = (VideoView) ((RelativeLayout) childView).getChildAt(0);
-                            if (videoView.isPlaying()) {
-                                videoView.pause();
-                            }
+                            SimpleExoPlayerView videoView = (SimpleExoPlayerView) ((RelativeLayout) childView).getChildAt(0);
+                            SimpleExoPlayer simpleExoPlayer = videoView.getPlayer();
+                            simpleExoPlayer.setPlayWhenReady(true);
                         }
                     }
                 }
             }
         });
 
-        Uri uri = Uri.parse("http://webm.land/media/Qn8D.webm");
-        Polaroid polaroid = new Polaroid(uri, null);
+//        Uri uri = Uri.parse("http://webm.land/media/Qn8D.webm");
+//        Polaroid polaroid = new Polaroid(uri, null);
+//
+//        polaroids.add(polaroid);
 
-        polaroids.add(polaroid);
-
-        uri = Uri.parse("http://i646.photobucket.com/albums/uu187/jess_roces/animal11.jpg");
-        polaroid = new Polaroid(null, uri);
-        polaroids.add(polaroid);
-        polaroids.add(polaroid);
+//        uri = Uri.parse("http://i646.photobucket.com/albums/uu187/jess_roces/animal11.jpg");
+//        polaroid = new Polaroid(null, uri);
+//        polaroids.add(polaroid);
+//        polaroids.add(polaroid);
 
         progressBar.setVisibility(View.GONE);
         recyclerView.setVisibility(View.VISIBLE);
