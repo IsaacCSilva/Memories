@@ -17,7 +17,7 @@ public class Setting extends Activity{
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
-        final TextView textSwitch = (TextView) findViewById(R.id.textSwitch);
+        final TextView textSwitch = (TextView) findViewById(R.id.textSwitch); // switch displays for radius
         Toolbar toolbar = (Toolbar) findViewById(R.id.tool_bar);
         setSupportActionBar(toolbar);
         Button b = (Button) findViewById(R.id.button2);

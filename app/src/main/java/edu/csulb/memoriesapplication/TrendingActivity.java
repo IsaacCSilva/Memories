@@ -1,8 +1,10 @@
 package edu.csulb.memoriesapplication;
 
+import android.app.Activity;
 import android.app.SearchManager;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -18,6 +20,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.MediaController;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
@@ -42,6 +45,7 @@ public class TrendingActivity extends AppCompatActivity{
     private CardViewAdapter rvAdapter;
     private MyConstraintLayout constraintLayout;
     private ProgressBar progressBar;
+    private ImageView ivImage;
 
     static final int CAM_REQUEST = 1;
 
@@ -63,6 +67,7 @@ public class TrendingActivity extends AppCompatActivity{
 
         //instantiate objects
         progressBar = (ProgressBar) this.findViewById(R.id.progress_bar);
+        ivImage = (ImageView) this.findViewById(R.id.ivImage);
         constraintLayout = (MyConstraintLayout) findViewById(R.id.constraintLayout);
         Intent startLeftNeighborActivity = new Intent(this, AddPictureTestActivity.class).addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
         constraintLayout.setLeftPage(startLeftNeighborActivity);
@@ -154,6 +159,33 @@ public class TrendingActivity extends AppCompatActivity{
         return super.onOptionsItemSelected(items);
     }
 
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) { // this should start the activity for the image after the camer is called and image is captured
+        super.onActivityResult(resultCode, resultCode, data);
+        if (resultCode == Activity.RESULT_OK) {  // If it camera is used
+            if (resultCode == CAM_REQUEST) {
+                /*
+                imageView.buildDrawingCache();
+Bitmap image= imageView.getDrawingCache();
+
+ Bundle extras = new Bundle();
+extras.putParcelable("imagebitmap", image);
+intent.putExtras(extras);
+startActivity(intent);
+
+
+Bundle extras = getIntent().getExtras();
+Bitmap bmp = (Bitmap) extras.getParcelable("imagebitmap");
+
+image.setImageBitmap(bmp );
+                 */  // alternative
+                Bundle bundle = data.getExtras();  // puts it in a"bundle" in terms of the image
+                 data = new Intent(TrendingActivity.this,ImageShow.class); // sends to the image activity
+                final Bitmap bmp = (Bitmap) bundle.get("data");   // send it in bits like it should with the intent "data"
+                ivImage.setImageBitmap(bmp); //setting the image
+            }
+        }
+    }
 
     public void setTransitions(int slideDirection) {
         Log.d("Slide Direction", "" +slideDirection);
