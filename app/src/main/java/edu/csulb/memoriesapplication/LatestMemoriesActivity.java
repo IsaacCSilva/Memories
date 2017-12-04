@@ -57,6 +57,7 @@ public class LatestMemoriesActivity extends Activity {
     private ArrayDeque<String> urlList;
     static final int CAM_REQUEST = 1;
     private String TAG = "LatestMemoriesActivity";
+    private SimpleExoPlayerView currentlyPlayingVideo;
 
     //Listener that is attached to the query
     ChildEventListener childEventListener = new ChildEventListener() {
@@ -147,7 +148,17 @@ public class LatestMemoriesActivity extends Activity {
                             SimpleExoPlayerView videoView = (SimpleExoPlayerView) ((RelativeLayout) childView).getChildAt(0);
                             SimpleExoPlayer simpleExoPlayer = videoView.getPlayer();
                             simpleExoPlayer.setPlayWhenReady(true);
+                            if(currentlyPlayingVideo != null && currentlyPlayingVideo != videoView){
+                                SimpleExoPlayer playerToPause = currentlyPlayingVideo.getPlayer();
+                                playerToPause.setPlayWhenReady(false);
+                            }
+                            currentlyPlayingVideo = videoView;
                         }
+                        else if(currentlyPlayingVideo != null){
+                            SimpleExoPlayer playerToPause = currentlyPlayingVideo.getPlayer();
+                            playerToPause.setPlayWhenReady(false);
+                        }
+
                     }
                     if (position2 != -1 && position2 != position1) {
                         Log.d("first visible item postion", "" + position2);
@@ -156,7 +167,7 @@ public class LatestMemoriesActivity extends Activity {
                         if (childView instanceof RelativeLayout) {
                             SimpleExoPlayerView videoView = (SimpleExoPlayerView) ((RelativeLayout) childView).getChildAt(0);
                             SimpleExoPlayer simpleExoPlayer = videoView.getPlayer();
-                            simpleExoPlayer.setPlayWhenReady(true);
+                            simpleExoPlayer.setPlayWhenReady(false);
                         }
                     }
                 }
@@ -266,6 +277,15 @@ public class LatestMemoriesActivity extends Activity {
                 polaroids.add(new Polaroid(Uri.parse(uriString), null));
             }
             rvAdapter.notifyDataSetChanged();
+        }
+    }
+
+    @Override
+    public void onPause(){
+        super.onPause();
+        if(currentlyPlayingVideo != null){
+            SimpleExoPlayer playerToPause = currentlyPlayingVideo.getPlayer();
+            playerToPause.setPlayWhenReady(false);
         }
     }
 
