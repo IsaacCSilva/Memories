@@ -1,9 +1,5 @@
 package edu.csulb.memoriesapplication;
 
-/**
- * Created by Brian on 11/16/2017.
- */
-
 import android.app.IntentService;
 import android.content.Intent;
 import android.location.Address;
