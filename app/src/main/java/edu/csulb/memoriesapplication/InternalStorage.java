@@ -16,12 +16,14 @@ import java.io.IOException;
  */
 
 public class InternalStorage {
-    private static final String USER_IMAGES_FOLDER  = "user_images";
+    private static final String USER_IMAGES_FOLDER = "user_images";
+    private static final String TEMP_IMAGES_FOLDER = "temp_images";
+    private static final String TEMP_IMAGE_NAME = "tempImage";
     private static final String IND_USER_PROFILE_PIC = "profile_pic_";
     private static final String IND_USER_BACKGROUND_PIC = "background_pic_";
     private static final String IMAGE_EXTENSION = ".png";
 
-    public enum ImageType{
+    public enum ImageType {
         PROFILE,
         BACKGROUND
     }
@@ -29,19 +31,19 @@ public class InternalStorage {
     public static void saveImageFile(Context context, ImageType imageType, String userId, Bitmap image) {
         File imageStoragePath = internalUserImageStoragePath(context);
         String fileName = null;
-        if(imageType == ImageType.PROFILE) {
+        if (imageType == ImageType.PROFILE) {
             fileName = IND_USER_PROFILE_PIC + userId + IMAGE_EXTENSION;
-        }else if(imageType == ImageType.BACKGROUND){
+        } else if (imageType == ImageType.BACKGROUND) {
             fileName = IND_USER_BACKGROUND_PIC + userId + IMAGE_EXTENSION;
         }
         File toSaveImagePath = new File(imageStoragePath, fileName);
-        try{
+        try {
             FileOutputStream fileOutputStream = new FileOutputStream(toSaveImagePath);
             image.compress(Bitmap.CompressFormat.PNG, 100, fileOutputStream);
             fileOutputStream.close();
-        }catch(FileNotFoundException exception) {
+        } catch (FileNotFoundException exception) {
             exception.printStackTrace();
-        }catch(IOException exception) {
+        } catch (IOException exception) {
             exception.printStackTrace();
         }
     }
@@ -50,13 +52,9 @@ public class InternalStorage {
         File imageStoragePath = internalUserImageStoragePath(context);
         String imageName = IND_USER_PROFILE_PIC + userId + IMAGE_EXTENSION;
         File userImage = new File(imageStoragePath, imageName);
-        if(userImage.exists()) {
-            try {
-                Bitmap userProfilePicture = BitmapFactory.decodeStream(new FileInputStream(userImage));
-                return userProfilePicture;
-            }catch(FileNotFoundException exception) {
-                exception.printStackTrace();
-            }
+        if (userImage.exists()) {
+            Bitmap userProfilePicture = BitmapFactory.decodeFile(userImage.getAbsolutePath());
+            return userProfilePicture;
         }
 
         return null;
@@ -66,15 +64,10 @@ public class InternalStorage {
         File imageStoragePath = internalUserImageStoragePath(context);
         String imageName = IND_USER_BACKGROUND_PIC + userId + IMAGE_EXTENSION;
         File userImage = new File(imageStoragePath, imageName);
-        if(userImage.exists()) {
-            try {
-                Bitmap userBackgroundPicture = BitmapFactory.decodeStream(new FileInputStream(userImage));
-                return userBackgroundPicture;
-            }catch(FileNotFoundException exception) {
-                exception.printStackTrace();
-            }
+        if (userImage.exists()) {
+            Bitmap userBackgroundPicture = BitmapFactory.decodeFile(userImage.getAbsolutePath());
+            return userBackgroundPicture;
         }
-
         return null;
     }
 

@@ -14,4 +14,5 @@
     <string name="help_center">Help Center</string>
     <string name="faq">FAQ</string>
     <string name="search_hint">City or State</string>
+    <string name="captured_media_submit_button">Submit</string>
 </resources>

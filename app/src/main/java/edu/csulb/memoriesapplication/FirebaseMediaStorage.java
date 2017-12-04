@@ -10,6 +10,7 @@ import android.support.annotation.NonNull;
 
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
@@ -25,25 +26,20 @@ public class FirebaseMediaStorage {
     private final static String MEDIA = "media";
     private final String TAG = "FirebaseMediaStorage";
     private StorageReference mediaStorageReference;
+    private String userId;
 
     FirebaseMediaStorage() {
         FirebaseStorage firebaseStorage = FirebaseStorage.getInstance();
         //Create a reference to the folder where every media should be saved
         mediaStorageReference = firebaseStorage.getReference().child(MEDIA);
+        FirebaseAuth firebaseAuth = FirebaseAuth.getInstance();
+        userId = firebaseAuth.getCurrentUser().getUid();
     }
 
-    void saveImageToFirebaseStorage(Context context, Uri media, final String userId){
-        //Retrieve the data to be put into the storage
-        String[] filePath = {MediaStore.Images.Media.DATA};
-        Cursor cursor = context.getContentResolver().query(media, filePath, null, null, null);
-        cursor.moveToFirst();
-        int columnIndex = cursor.getColumnIndex(filePath[0]);
-        String mediaPath = cursor.getString(columnIndex);
-        Bitmap image = BitmapFactory.decodeFile(mediaPath);
-
+    void saveImageToFirebaseStorage(Bitmap image){
         //Create the data that is going to be output to Firebase Storage
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        image.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream);
+        image.compress(Bitmap.CompressFormat.JPEG, 30, byteArrayOutputStream);
         byte[] byteOutput = byteArrayOutputStream.toByteArray();
 
         //Create a random string appended to the userId to create a unique String that symbolizes the user's video
@@ -73,7 +69,7 @@ public class FirebaseMediaStorage {
         });
     }
 
-    void saveVideoToFirebaseStorage(Uri video, final String userId) {
+    void saveVideoToFirebaseStorage(Uri video) {
         //Creates a random Unique string to symbolize the file video
         String randomString = UUID.randomUUID().toString();
         final StorageReference mediaStorageLoc = mediaStorageReference.child(randomString);

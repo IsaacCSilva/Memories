@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.renderscript.Sampler;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -32,6 +33,7 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.Query;
+import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -68,9 +70,7 @@ public class LatestMemoriesActivity extends Activity {
             } else if(mediaType.charAt(0) == 'v') {
                 urlString = urlString + 'v';
             }
-            urlList.add(urlString);
-            loadPolaroids();
-            rvAdapter.notifyDataSetChanged();
+            urlList.addFirst(urlString);
             Log.d(TAG, urlString);
         }
 
@@ -87,6 +87,18 @@ public class LatestMemoriesActivity extends Activity {
         @Override
         public void onChildMoved(DataSnapshot dataSnapshot, String s) {
 
+        }
+
+        @Override
+        public void onCancelled(DatabaseError databaseError) {
+
+        }
+    };
+
+    ValueEventListener valueEventListener = new ValueEventListener() {
+        @Override
+        public void onDataChange(DataSnapshot dataSnapshot) {
+            loadPolaroids();
         }
 
         @Override
@@ -226,6 +238,8 @@ public class LatestMemoriesActivity extends Activity {
         Attach a listener so that if any more media links are added to the database,
         they will be added to the top of the array list stack*/
         urlQuery.addChildEventListener(childEventListener);
+        //Add listener so that we know the update finished
+        urlQuery.addValueEventListener(valueEventListener);
         //Initialize the ArrayList to hold the url strings
         urlList = new ArrayDeque<>(maxQuerySize);
     }
@@ -251,8 +265,8 @@ public class LatestMemoriesActivity extends Activity {
                 Log.d("Latest loadPolaroid()", "loading video");
                 polaroids.add(new Polaroid(Uri.parse(uriString), null));
             }
+            rvAdapter.notifyDataSetChanged();
         }
-
     }
 
 }

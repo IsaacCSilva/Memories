@@ -75,7 +75,7 @@ public class TrendingActivity extends AppCompatActivity{
         //instantiate objects
         progressBar = (ProgressBar) this.findViewById(R.id.progress_bar);
         constraintLayout = (MyConstraintLayout) findViewById(R.id.constraintLayout);
-        Intent startLeftNeighborActivity = new Intent(this, AddPictureTestActivity.class).addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+        Intent startLeftNeighborActivity = new Intent(this, UserPageActivity.class).addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
         constraintLayout.setLeftPage(startLeftNeighborActivity);
         Intent startRightNeighborActivity = new Intent(this, LatestMemoriesActivity.class).addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
         constraintLayout.setRightPage(startRightNeighborActivity);
@@ -178,7 +178,7 @@ public class TrendingActivity extends AppCompatActivity{
             // Continue only if the File was successfully created
             if (photoFile != null) {
                 Uri photoURI = FileProvider.getUriForFile(this,
-                        "com.example.android.fileprovider",
+                        "edu.csulb.memoriesapplication.fileprovider",
                         photoFile);
                 takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
                 startActivityForResult(takePictureIntent, REQUEST_TAKE_PHOTO);
@@ -188,15 +188,8 @@ public class TrendingActivity extends AppCompatActivity{
 
     private File createImageFile() throws IOException {
         // Create an image file name
-        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
-        String imageFileName = "JPEG_" + timeStamp + "_";
         File storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
-        File image = File.createTempFile(
-                imageFileName,  /* prefix */
-                ".jpg",         /* suffix */
-                storageDir      /* directory */
-        );
-
+        File image = new File(storageDir, "tempImage.jpg");
         // Save a file: path for use with ACTION_VIEW intents
         mCurrentPhotoPath = image.getAbsolutePath();
         return image;
