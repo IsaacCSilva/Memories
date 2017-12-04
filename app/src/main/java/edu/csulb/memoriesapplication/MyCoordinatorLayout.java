@@ -70,15 +70,21 @@ public class MyCoordinatorLayout extends android.support.design.widget.Coordinat
         }
 
         Scene scene = new Scene(this);
-        Intent intent = new Intent();
+        Intent intent = null;
         Slide slide = new Slide();
         if (deltaX > SWIPE_THRESHOLD) {
-            intent = leftPage;
-            slide.setSlideEdge(Gravity.RIGHT);
+            if(leftPage != null) {
+                intent = leftPage;
+                intent.putExtra("slide edge", 1);
+                slide.setSlideEdge(Gravity.RIGHT);
+            }
         }
         else if(deltaX < SWIPE_THRESHOLD * -1){
-            intent = rightPage;
-            slide.setSlideEdge(Gravity.LEFT);
+            if(rightPage != null) {
+                intent = rightPage;
+                intent.putExtra("slide edge", 0);
+                slide.setSlideEdge(Gravity.LEFT);
+            }
         }
         if(deltaX > SWIPE_THRESHOLD || deltaX < SWIPE_THRESHOLD * -1) {
             if(intent != null) {
