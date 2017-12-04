@@ -112,6 +112,7 @@ public class CardViewAdapter extends RecyclerView.Adapter<CardViewAdapter.CardVi
         rv.addView(videoView);
         rv.setBackgroundColor(Color.BLACK);
         cardView.addView(rv);
+        simpleExoPlayer.setRepeatMode(SimpleExoPlayer.REPEAT_MODE_ONE);
         if(position == 0) {
             simpleExoPlayer.setPlayWhenReady(true);
         }
