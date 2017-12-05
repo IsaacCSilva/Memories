@@ -4,12 +4,18 @@ import android.app.IntentService;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.location.Address;
+import android.location.Geocoder;
+import android.location.Location;
 import android.os.IBinder;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
+import android.widget.Toast;
 
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
@@ -19,6 +25,10 @@ import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.StorageException;
 import com.google.firebase.storage.StorageReference;
 
+import java.io.IOException;
+import java.util.List;
+import java.util.Locale;
+
 /**
  * Created by Daniel on 11/1/2017.
  */
@@ -27,8 +37,9 @@ public class UserService extends IntentService {
 
     public final static String LOAD_USER_PROFILE_PICTURES_FROM_DATABASE_ACTION = "LUPPFDA";
     public final static String LOAD_USER_BACKGROUND_PICTURES_FROM_DATABASE_ACTION = "LUBPFDA";
-    public final static String REFRESH_USER_PRIMITIVE_DATA_ACTION = "RUPD";
-    public final static String STORE_USER_PICTURE_TO_DATABASE = "SUPTD";
+    public final static String REFRESH_USER_PRIMITIVE_DATA_ACTION = "RUPDA";
+    public final static String STORE_USER_PICTURE_TO_DATABASE_ACTION = "SUPTDA";
+    public final static String STORE_MEMORY_IMAGE_TO_DATABASE_ACTION = "SMITDA";
     public final static String UPDATE_USER_INTRO = "UUI";
     public final static String IMAGE_TYPE = "image_type";
     public final static String USER_IMAGE_TYPE_PROFILE = "profileImage";
@@ -84,7 +95,7 @@ public class UserService extends IntentService {
                         Log.d(TAG, "User profile image received from storage successfully");
                         Bitmap image = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
                         InternalStorage.saveImageFile(UserService.this, InternalStorage.ImageType.PROFILE, userId, image);
-                        userImageLoadFinishedIntent.putExtra(BroadcastKey.RECEIVED_IMAGE,true);
+                        userImageLoadFinishedIntent.putExtra(BroadcastKey.RECEIVED_IMAGE, true);
 
                         //Tell the UI Thread that the profile image has been received successfully
                         LocalBroadcastManager.getInstance(UserService.this).sendBroadcast(userImageLoadFinishedIntent);
@@ -94,7 +105,7 @@ public class UserService extends IntentService {
                     public void onFailure(@NonNull Exception e) {
                         userImageLoadFinishedIntent.putExtra(BroadcastKey.RECEIVED_IMAGE, false);
                         int errorCode = ((StorageException) e).getErrorCode();
-                        switch(errorCode) {
+                        switch (errorCode) {
                             case StorageException.ERROR_OBJECT_NOT_FOUND: {
                                 Log.d(TAG, "User File not found in storage.");
                             }
@@ -127,7 +138,7 @@ public class UserService extends IntentService {
                         Log.d(TAG, "User background image received from storage successfully");
                         Bitmap image = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
                         InternalStorage.saveImageFile(UserService.this, InternalStorage.ImageType.BACKGROUND, userId, image);
-                        userImageLoadFinishedIntent.putExtra(BroadcastKey.RECEIVED_IMAGE,true);
+                        userImageLoadFinishedIntent.putExtra(BroadcastKey.RECEIVED_IMAGE, true);
 
                         //Tell the UI Thread that the background image has been received successfully
                         LocalBroadcastManager.getInstance(UserService.this).sendBroadcast(userImageLoadFinishedIntent);
@@ -137,7 +148,7 @@ public class UserService extends IntentService {
                     public void onFailure(@NonNull Exception e) {
                         userImageLoadFinishedIntent.putExtra(BroadcastKey.RECEIVED_IMAGE, false);
                         int errorCode = ((StorageException) e).getErrorCode();
-                        switch(errorCode) {
+                        switch (errorCode) {
                             case StorageException.ERROR_OBJECT_NOT_FOUND: {
                                 Log.d(TAG, "User File not found in storage.");
                             }
@@ -154,7 +165,7 @@ public class UserService extends IntentService {
             break;
             //----------------------------------------------------------------------------------------------------------------------------------------------------
             //Stores the pictures provided in the intent to the database and to the internal storage of the device
-            case STORE_USER_PICTURE_TO_DATABASE: {
+            case STORE_USER_PICTURE_TO_DATABASE_ACTION: {
                 String userId = getUserId();
                 UserFirebaseStorage userFirebaseStorage = new UserFirebaseStorage();
 
@@ -199,10 +210,42 @@ public class UserService extends IntentService {
             case UPDATE_USER_INTRO: {
                 String userIntro = intent.getStringExtra(UserDatabase.USER_INTRODUCTION);
                 String userId = getUserId();
-                UserDatabase userDatabase = new UserDatabase();
-                userDatabase.updateUserIntroduction(userId, userIntro);
+                UserDatabase.updateUserIntroduction(userId, userIntro);
             }
             break;
+            case STORE_MEMORY_IMAGE_TO_DATABASE_ACTION: {
+                String imagePath = intent.getStringExtra("filepath");
+                final Bitmap image = BitmapFactory.decodeFile(imagePath);
+                FusedLocationProviderClient fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+                try {
+                    fusedLocationClient.getLastLocation()
+                            .addOnSuccessListener(new OnSuccessListener<Location>() {
+                                @Override
+                                public void onSuccess(Location location) {
+                                    if (location != null) {
+                                        double longitude = location.getLongitude();
+                                        double latitude = location.getLatitude();
+                                        Geocoder geocoder = new Geocoder(UserService.this, Locale.getDefault());
+                                        String city = "";
+                                        String state = "";
+                                        try {
+                                            List<Address> addressList = geocoder.getFromLocation(latitude, longitude, 1);
+                                            city = addressList.get(0).getLocality();
+                                            state = addressList.get(0).getAdminArea();
+                                        } catch (IOException exception) {
+                                            exception.printStackTrace();
+                                        }
+                                        FirebaseMediaStorage firebaseMediaStorage = new FirebaseMediaStorage();
+                                        firebaseMediaStorage.saveImageToFirebaseStorage(image, city, state);
+                                    } else {
+                                        Log.d(TAG, "Location is null...");
+                                    }
+                                }
+                            });
+                } catch (SecurityException exception) {
+                    Log.d(TAG, "Security Exception :" + exception.toString());
+                }
+            }
         }
     }
 

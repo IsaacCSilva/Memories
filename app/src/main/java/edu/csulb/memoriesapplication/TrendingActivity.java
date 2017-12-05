@@ -1,12 +1,18 @@
 package edu.csulb.memoriesapplication;
 
+import android.*;
+import android.Manifest;
 import android.app.SearchManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
+import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.CardView;
@@ -50,11 +56,13 @@ public class TrendingActivity extends AppCompatActivity{
     private ArrayList<Polaroid> polaroids;
     private CardViewAdapter rvAdapter;
     private MyConstraintLayout constraintLayout;
-    private ProgressBar progressBar;
+    private boolean accessLocationPermission;
+    private static final int REQUEST_TAKE_PHOTO = 1;
+    private static final int PERMISSION_REQUEST_CODE = 1052;
+    private boolean cameraRequest;
+    private String mCurrentPhotoPath;
 
-    static final int REQUEST_TAKE_PHOTO = 1;
-
-    String mCurrentPhotoPath;
+    //Todo: Daniel's work centralize a way to get location so not alot of copy and paste
 
 
     @Override
@@ -72,8 +80,20 @@ public class TrendingActivity extends AppCompatActivity{
         //set transitions
         setTransitions(slideDirection);
 
+        //Variable to check if the user wants a camera request to change the behavior of onRequestPermissionsResult
+        cameraRequest = false;
+
+        //Check if we are able to access the user's location
+        accessLocationPermission = UserPermission.checkUserPermission(this, UserPermission.Permission.LOCATION_PERMISSION);
+
+        //If accessLocationPermission variable is false, cannot display anything... ask for user's permission
+        if(!accessLocationPermission) {
+            requestPermission();
+        } else {
+            //Todo: we have permission, query based on location
+        }
+
         //instantiate objects
-        progressBar = (ProgressBar) this.findViewById(R.id.progress_bar);
         constraintLayout = (MyConstraintLayout) findViewById(R.id.constraintLayout);
         Intent startLeftNeighborActivity = new Intent(this, UserPageActivity.class).addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
         constraintLayout.setLeftPage(startLeftNeighborActivity);
@@ -82,7 +102,6 @@ public class TrendingActivity extends AppCompatActivity{
         polaroids = new ArrayList<Polaroid>();
         rvAdapter = new CardViewAdapter(this, polaroids);
         recyclerView = (RecyclerView) findViewById(R.id.recyclerView);
-        recyclerView.setVisibility(View.GONE);
         linearLayoutManager = new LinearLayoutManager(this.getApplicationContext());
         recyclerView.setLayoutManager(linearLayoutManager);
         recyclerView.setAdapter(rvAdapter);
@@ -116,25 +135,13 @@ public class TrendingActivity extends AppCompatActivity{
                 }
             }
         });
-
-//        Uri uri = Uri.parse("http://webm.land/media/Qn8D.webm");
-//        Polaroid polaroid = new Polaroid(uri, null);
-//
-//        polaroids.add(polaroid);
-
-//        uri = Uri.parse("http://i646.photobucket.com/albums/uu187/jess_roces/animal11.jpg");
-//        polaroid = new Polaroid(null, uri);
-//        polaroids.add(polaroid);
-//        polaroids.add(polaroid);
-
-        progressBar.setVisibility(View.GONE);
-        recyclerView.setVisibility(View.VISIBLE);
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.user_menu, menu);
+
 
         // Associate searchable configuration with the SearchView
         SearchManager searchManager = (SearchManager) getSystemService(Context.SEARCH_SERVICE);
@@ -144,6 +151,7 @@ public class TrendingActivity extends AppCompatActivity{
         searchView.setQueryHint(getResources().getString(R.string.search_hint));
 
         searchView.setSearchableInfo(searchManager.getSearchableInfo(getComponentName()));
+
         return true;
     }
 
@@ -157,11 +165,46 @@ public class TrendingActivity extends AppCompatActivity{
                 return true;
             }
             case R.id.action_cam: {
-                dispatchTakePictureIntent();
-                return true;
+                if(accessLocationPermission) {
+                    dispatchTakePictureIntent();
+                    return true;
+                } else {
+                    cameraRequest = true;
+                    requestPermission();
+                }
             }
         }
         return super.onOptionsItemSelected(items);
+    }
+
+    //Asks for the user's permission, double check just in case, don't want to ask the user a second time
+    private void requestPermission(){
+        if(ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) !=
+                PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION},
+                    PERMISSION_REQUEST_CODE);
+        }
+    }
+
+    //Permission result received, act accordingly
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        switch(requestCode) {
+            case PERMISSION_REQUEST_CODE: {
+                if(grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    //Permission has been granted
+                    accessLocationPermission = true;
+                    if(cameraRequest) {
+                        dispatchTakePictureIntent();
+                        cameraRequest = false;
+                    }
+                } else {
+                    //Permission Denied
+                    Toast.makeText(this, "Location Permission Denied", Toast.LENGTH_SHORT).show();
+                }
+            }
+        }
     }
 
     private void dispatchTakePictureIntent() {

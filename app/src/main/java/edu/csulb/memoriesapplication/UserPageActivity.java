@@ -6,7 +6,6 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
@@ -29,8 +28,16 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.Query;
+import com.google.firebase.database.ValueEventListener;
+
+import java.util.ArrayDeque;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 
@@ -57,6 +64,7 @@ public class UserPageActivity extends Activity implements View.OnClickListener {
     private View viewContainer;
     private View progressBar;
     private String userId;
+    private int activityToStart;
     private boolean userPrimitiveDataLoaded;
     private boolean userProfileImageLoaded;
     private boolean userBackgroundImageLoaded;
@@ -175,11 +183,7 @@ public class UserPageActivity extends Activity implements View.OnClickListener {
             }, intentFilter);
         }
 
-
-
-        //Check if read permission is granted for the application to read the user's information located on their external storage
-        SharedPreferences sharedPreferences = getSharedPreferences(SharedPreferencesKey.USER_SETTINGS, 0);
-        readPermissionGranted = sharedPreferences.getBoolean(SharedPreferencesKey.READ_PERMISSION + userId, false);
+        readPermissionGranted = UserPermission.checkUserPermission(this, UserPermission.Permission.READ_PERMISSION);
 
         //Register receiver to check if UserService is finished refreshing the user data
         IntentFilter intentFilter = new IntentFilter(BroadcastKey.USER_INFO_REFRESH_FINISH_ACTION);
@@ -221,7 +225,7 @@ public class UserPageActivity extends Activity implements View.OnClickListener {
     }
 
     //Ask the user if we are able to store a picture with their permission during runtime
-    private void checkPermissions() {
+    private void requestPermissions() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) !=
                 PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, REQUEST_CODE);
@@ -234,11 +238,12 @@ public class UserPageActivity extends Activity implements View.OnClickListener {
         switch (requestCode) {
             case REQUEST_CODE: {
                     if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                        //Permission has been granted
                         readPermissionGranted = true;
-                        SharedPreferences sharedPreferences = getSharedPreferences(SharedPreferencesKey.USER_SETTINGS, 0);
-                        SharedPreferences.Editor userSettings = sharedPreferences.edit();
-                        userSettings.putBoolean(SharedPreferencesKey.READ_PERMISSION + userId, true);
-                        userSettings.commit();
+                        Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+                        startActivityForResult(intent, activityToStart);
+                    } else {
+                        Toast.makeText(this, "Read Permission Denied", Toast.LENGTH_SHORT).show();
                     }
             }
         }
@@ -249,7 +254,8 @@ public class UserPageActivity extends Activity implements View.OnClickListener {
         switch (v.getId()) {
             case R.id.user_profile_picture: {
                 if (!readPermissionGranted) {
-                    checkPermissions();
+                    activityToStart = RESULT_LOAD_PROFILE_PIC;
+                    requestPermissions();
                 } else {
                     Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
                     startActivityForResult(intent, RESULT_LOAD_PROFILE_PIC);
@@ -258,7 +264,8 @@ public class UserPageActivity extends Activity implements View.OnClickListener {
             break;
             case R.id.background_image: {
                 if(!readPermissionGranted) {
-                    checkPermissions();
+                    activityToStart = RESULT_LOAD_BACKGROUND_PIC;
+                    requestPermissions();
                 } else {
                     Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
                     startActivityForResult(intent, RESULT_LOAD_BACKGROUND_PIC);
@@ -309,7 +316,7 @@ public class UserPageActivity extends Activity implements View.OnClickListener {
             cursor.close();
 
             //Start intent to store the image into database and internal storage
-            Intent storeImageIntent = new Intent(UserService.STORE_USER_PICTURE_TO_DATABASE);
+            Intent storeImageIntent = new Intent(UserService.STORE_USER_PICTURE_TO_DATABASE_ACTION);
             storeImageIntent.setClass(this, UserService.class);
 
             if(requestCode == RESULT_LOAD_PROFILE_PIC) {
@@ -404,5 +411,47 @@ public class UserPageActivity extends Activity implements View.OnClickListener {
         getWindow().setReturnTransition(enterSlide);
     }
 
+    public void getUserImagesUrl() {
+        //Creates a reference for the location where the user media link is stored ordered by time
+        DatabaseReference databaseReference = UserDatabase.getUserMediaListReference(userId);
+        //Query all of the urls ordered by their keys
+        Query urlQuery = databaseReference.orderByKey();
+        //Adds a value listener to the query to notify the application when it is done
+        urlQuery.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                ArrayDeque<String> urlList = new ArrayDeque<>();
+                //Get the list
+                String urlString = "";
+                String mediaType = "";
+                for(DataSnapshot mediaSnapshot : dataSnapshot.getChildren()) {
+                    mediaType = (String) mediaSnapshot.child(UserDatabase.USER_MEDIA_TYPE_KEY).getValue();
+                    urlString = (String) mediaSnapshot.child(UserDatabase.USER_URL_KEY).getValue();
+                    if(mediaType.charAt(0) == 'i'){
+                        urlString = urlString + 'i';
+                    } else if(mediaType.charAt(0) == 'v') {
+                        urlString = urlString + 'v';
+                    }
+                    urlList.addFirst(urlString);
+                }
+                //TODO: Finished adding the url list, upload grid after this
+                //I didn't know if you still needed to know if it was an image or video but added it just in case
+                //------------------Logic Here------------------//
+
+
+                //----------------End Logic---------------------//
+
+                //TODO; Daniel needs to add the progress bar to the grid layout and make it dissapear everything is loaded
+
+
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
+
+    }
 
 }

@@ -16,21 +16,22 @@ public class UserDatabase {
     final static String USERS = "Users";
     final static String USER_INTRODUCTION = "USER_INTRODUCTION";
     private final static String USER_MEDIA_LIST = "mediaList";
-    private final String USER_URL_KEY = "url";
-    private final String USER_MEDIA_TYPE_KEY = "mediaType";
-
+    final static String USER_URL_KEY = "url";
+    final static String USER_MEDIA_TYPE_KEY = "mediaType";
+    private final static String STATE_KEY = "state";
+    private final static String CITY_KEY = "city";
     public enum MediaType{
         IMAGE,
         VIDEO
     }
 
-    void updateUserIntroduction(String userId, String introduction) {
+    static void updateUserIntroduction(String userId, String introduction) {
         DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference(USERS);
         DatabaseReference userIntroReference = databaseReference.child(userId).child("userIntro");
         userIntroReference.setValue(introduction);
     }
 
-    void addMediaUrl(String userId, Uri uri, MediaType mediaType) {
+    static void addMediaUrl(String userId, Uri uri, String city, String state, MediaType mediaType) {
         DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference(USERS);
         incrementPostCount(userId);
         DatabaseReference userMediaListReference = databaseReference.child(userId).child(USER_MEDIA_LIST).push();
@@ -40,9 +41,15 @@ public class UserDatabase {
         } else {
             userMediaListReference.child(USER_MEDIA_TYPE_KEY).setValue("video");
         }
+        userMediaListReference.child(STATE_KEY).setValue(state);
+        userMediaListReference.child(CITY_KEY).setValue(city);
     }
 
-    private void incrementPostCount(String userId) {
+    static DatabaseReference getUserMediaListReference(String userId) {
+        return FirebaseDatabase.getInstance().getReference(USERS).child(userId).child(USER_MEDIA_LIST);
+    }
+
+    private static void incrementPostCount(String userId) {
         FirebaseDatabase firebaseDatabase = FirebaseDatabase.getInstance();
         final DatabaseReference databaseReference = firebaseDatabase.getReference(USERS).child(userId).child("userPostsCount");
         databaseReference.addListenerForSingleValueEvent(new ValueEventListener() {
@@ -59,5 +66,6 @@ public class UserDatabase {
             }
         });
     }
+
 
 }

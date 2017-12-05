@@ -14,9 +14,10 @@ import android.widget.Toast;
 
 public class DisplayActivity extends AppCompatActivity implements View.OnClickListener{
 
-    Button submitButton;
+    private Button submitButton;
     private String TAG  = "DisplayActivity";
-    Bitmap image;
+    private String imagePath;
+    private Bitmap image;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -25,8 +26,8 @@ public class DisplayActivity extends AppCompatActivity implements View.OnClickLi
 
         Intent intent = getIntent();
         //Set image value
-        String imageReceived = intent.getStringExtra("filepath");
-        image = BitmapFactory.decodeFile(imageReceived);
+        imagePath = intent.getStringExtra("filepath");
+        image = BitmapFactory.decodeFile(imagePath);
         initializeImageThumbnail(intent);
         submitButton = (Button) this.findViewById(R.id.submitMediaButton);
         submitButton.setOnClickListener(this);
@@ -40,8 +41,10 @@ public class DisplayActivity extends AppCompatActivity implements View.OnClickLi
     @Override
     public void onClick(View view) {
         if(image != null) {
-            FirebaseMediaStorage firebaseMediaStorage = new FirebaseMediaStorage();
-            firebaseMediaStorage.saveImageToFirebaseStorage(image);
+            Intent intent = new Intent(this, UserService.class);
+            intent.setAction(UserService.STORE_MEMORY_IMAGE_TO_DATABASE_ACTION);
+            intent.putExtra("filepath", imagePath);
+            startService(intent);
             finish();
         }
     }

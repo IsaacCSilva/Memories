@@ -38,30 +38,33 @@
         <activity android:name=".CreateAccountActivity"></activity>
         <activity
             android:name=".TrendingActivity"
-            android:launchMode="singleTop">
+            android:launchMode="singleTop"
+            android:label="Trending Memories">
             <meta-data
                 android:name="android.app.searchable"
                 android:resource="@xml/searchable" />
         </activity>
         <activity android:name=".UserPageActivity"></activity>
-        <activity android:name=".LatestMemoriesActivity">
+        <activity
+            android:name=".LatestMemoriesActivity"
+            android:label="Latest Memories">
             <meta-data
                 android:name="android.app.searchable"
                 android:resource="@xml/searchable" />
         </activity>
         <activity
             android:name=".Setting"
-            android:label="Settings"></activity>
-        <activity android:name=".SearchResultsActivity">
+            android:label="Settings">
+
+        </activity>
+        <activity android:name=".SearchResultsActivity"
+            android:label="Search Results">
             <intent-filter>
                 <action android:name="android.intent.action.SEARCH" />
             </intent-filter>
         </activity>
-        <activity android:name=".AddPictureTestActivity"></activity>
 
         <service android:name=".UserService"></service>
-        <service android:name=".LocationService"></service>
-
         <activity android:name=".DisplayActivity"></activity>
     </application>
 

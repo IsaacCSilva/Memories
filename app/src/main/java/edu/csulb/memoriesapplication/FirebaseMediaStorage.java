@@ -36,7 +36,7 @@ public class FirebaseMediaStorage {
         userId = firebaseAuth.getCurrentUser().getUid();
     }
 
-    void saveImageToFirebaseStorage(Bitmap image){
+    void saveImageToFirebaseStorage(Bitmap image, final String city, final String state){
         //Create the data that is going to be output to Firebase Storage
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         image.compress(Bitmap.CompressFormat.JPEG, 30, byteArrayOutputStream);
@@ -55,11 +55,9 @@ public class FirebaseMediaStorage {
             public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
                 Uri downloadUri = taskSnapshot.getDownloadUrl();
                 //Successful upload, get download URL to reference from user's database and global database
-                UserDatabase userDatabase = new UserDatabase();
-                //Adds the media URL to the user's database account
-                userDatabase.addMediaUrl(userId, downloadUri, UserDatabase.MediaType.IMAGE);
+                UserDatabase.addMediaUrl(userId, downloadUri, city, state, UserDatabase.MediaType.IMAGE);
                 //Adds the media URl to the global database
-                GlobalDatabase.addMediaUrl(downloadUri, GlobalDatabase.MediaType.IMAGE);
+                GlobalDatabase.addMediaUrl(downloadUri, city, state, GlobalDatabase.MediaType.IMAGE);
             }
         }).addOnFailureListener(new OnFailureListener() {
             @Override
@@ -79,11 +77,9 @@ public class FirebaseMediaStorage {
             public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
                 Uri downloadUri = taskSnapshot.getDownloadUrl();
                 //Successful upload, get download URL to reference from user's database and global database
-                UserDatabase userDatabase = new UserDatabase();
-                //Adds the media URL to the user's database account
-                userDatabase.addMediaUrl(userId, downloadUri, UserDatabase.MediaType.VIDEO);
-                //Adds the media URl to the global database
-                GlobalDatabase.addMediaUrl(downloadUri, GlobalDatabase.MediaType.VIDEO);
+//                UserDatabase.addMediaUrl(userId, downloadUri, UserDatabase.MediaType.VIDEO);
+//                //Adds the media URl to the global database
+//                GlobalDatabase.addMediaUrl(downloadUri, GlobalDatabase.MediaType.VIDEO);
             }
         }).addOnFailureListener(new OnFailureListener() {
             @Override

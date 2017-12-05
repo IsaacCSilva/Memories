@@ -1,14 +1,19 @@
 package edu.csulb.memoriesapplication;
 
-import android.app.Activity;
-import android.app.FragmentManager;
+import android.*;
 import android.app.SearchManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.provider.MediaStore;
-import android.renderscript.Sampler;
+import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
+import android.support.v4.content.FileProvider;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -20,12 +25,9 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.MediaController;
-import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.SearchView;
 import android.widget.Toast;
-import android.widget.VideoView;
-
 import com.google.android.exoplayer2.SimpleExoPlayer;
 import com.google.android.exoplayer2.ui.SimpleExoPlayerView;
 import com.google.firebase.database.ChildEventListener;
@@ -35,29 +37,36 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-
-import javax.microedition.khronos.opengles.GL;
 
 /**
  * Created by Danie on 10/16/2017.
  */
 
-public class LatestMemoriesActivity extends Activity {
+public class LatestMemoriesActivity extends AppCompatActivity {
     //added
     private LinearLayoutManager linearLayoutManager;
     private RecyclerView recyclerView;
-    private MediaController mediaController;
     private ArrayList<Polaroid> polaroids;
     private CardViewAdapter rvAdapter;
     private MyConstraintLayout constraintLayout;
-    private ProgressBar progressBar;
     private Query urlQuery;
     private ArrayDeque<String> urlList;
-    static final int CAM_REQUEST = 1;
+    private boolean accessLocationPermission;
+    private static final int REQUEST_TAKE_PHOTO = 1;
+    private static final int PERMISSION_REQUEST_CODE = 1052;
     private String TAG = "LatestMemoriesActivity";
     private SimpleExoPlayerView currentlyPlayingVideo;
+    private String mCurrentPhotoPath;
+    private boolean cameraRequest;
+
+    /*TODO: Card Views appear after the query finishes, have them actually be there right when the activity starts
+    TODO:Populate those card views after the fact of the above and do the same for trending activity
+    TODO: Add the location title on top of the polaroids, I will query them in once I get the location attribute attachment finished
+     */
 
     //Listener that is attached to the query
     ChildEventListener childEventListener = new ChildEventListener() {
@@ -79,8 +88,6 @@ public class LatestMemoriesActivity extends Activity {
         public void onChildChanged(DataSnapshot dataSnapshot, String s) {
 
         }
-
-        @Override
         public void onChildRemoved(DataSnapshot dataSnapshot) {
 
         }
@@ -117,11 +124,21 @@ public class LatestMemoriesActivity extends Activity {
         //set transitions
         setTransitions();
 
-        //Initialize the query
-        initializeQuery();
+        //Variable to check if the user wants a camera request to change the behavior of onRequestPermissionsResult
+        cameraRequest = false;
+
+        //Check if we are able to access the user's location
+        accessLocationPermission = UserPermission.checkUserPermission(this, UserPermission.Permission.LOCATION_PERMISSION);
+
+        //If accessLocationPermission variable is false, cannot display anything... ask for user's permission
+        if(!accessLocationPermission) {
+            requestPermission();
+        } else {
+            //Application has permission to use the user's location, initialize the query
+            initializeQuery();
+        }
 
         //instantiate objects
-        progressBar = (ProgressBar) this.findViewById(R.id.progress_bar);
         constraintLayout = (MyConstraintLayout) findViewById(R.id.constraintLayout);
         Intent startNeighborActivity = new Intent(this, TrendingActivity.class);
         startNeighborActivity.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
@@ -129,7 +146,6 @@ public class LatestMemoriesActivity extends Activity {
         polaroids = new ArrayList<Polaroid>();
         rvAdapter = new CardViewAdapter(this, polaroids);
         recyclerView = (RecyclerView) findViewById(R.id.recyclerView);
-        recyclerView.setVisibility(View.GONE);
         linearLayoutManager = new LinearLayoutManager(this.getApplicationContext());
         recyclerView.setLayoutManager(linearLayoutManager);
         recyclerView.setAdapter(rvAdapter);
@@ -173,20 +189,6 @@ public class LatestMemoriesActivity extends Activity {
                 }
             }
         });
-
-//        Uri uri = Uri.parse("http://webm.land/media/Qn8D.webm");
-//        Polaroid polaroid = new Polaroid(uri, null);
-//
-//        polaroids.add(polaroid);
-//
-//        uri = Uri.parse("http://i646.photobucket.com/albums/uu187/jess_roces/animal11.jpg");
-//        polaroid = new Polaroid(null, uri);
-//        polaroids.add(polaroid);
-//        polaroids.add(polaroid);
-
-        progressBar.setVisibility(View.GONE);
-        recyclerView.setVisibility(View.VISIBLE);
-
     }
 
     @Override
@@ -215,13 +217,90 @@ public class LatestMemoriesActivity extends Activity {
                 return true;
             }
             case R.id.action_cam: {
-                Intent camera_intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-                startActivityForResult(camera_intent, CAM_REQUEST);
-                return true;
+                if(accessLocationPermission) {
+                    dispatchTakePictureIntent();
+                    return true;
+                } else {
+                    cameraRequest = true;
+                    requestPermission();
+                }
             }
         }
         return super.onOptionsItemSelected(items);
     }
+
+    //Asks for the user's permission, double check just in case, don't want to ask the user a second time
+    private void requestPermission(){
+        if(ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) !=
+                PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION},
+                    PERMISSION_REQUEST_CODE);
+        }
+    }
+
+    //Permission result received, act accordingly
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        switch(requestCode) {
+            case PERMISSION_REQUEST_CODE: {
+                if(grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    //Permission has been granted
+                    accessLocationPermission = true;
+                    if(cameraRequest) {
+                        dispatchTakePictureIntent();
+                        cameraRequest = false;
+                    }
+                } else {
+                    //Permission Denied
+                    Toast.makeText(this, "Location Permission Denied", Toast.LENGTH_SHORT).show();
+                }
+            }
+        }
+    }
+
+    private void dispatchTakePictureIntent() {
+        Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        // Ensure that there's a camera activity to handle the intent
+        if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
+            // Create the File where the photo should go
+            File photoFile = null;
+            try {
+                photoFile = createImageFile();
+            } catch (IOException ex) {
+                // Error occurred while creating the File
+            }
+            // Continue only if the File was successfully created
+            if (photoFile != null) {
+                Uri photoURI = FileProvider.getUriForFile(this,
+                        "edu.csulb.memoriesapplication.fileprovider",
+                        photoFile);
+                takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
+                startActivityForResult(takePictureIntent, REQUEST_TAKE_PHOTO);
+            }
+        }
+    }
+
+    private File createImageFile() throws IOException {
+        // Create an image file name
+        File storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+        File image = new File(storageDir, "tempImage.jpg");
+        // Save a file: path for use with ACTION_VIEW intents
+        mCurrentPhotoPath = image.getAbsolutePath();
+        return image;
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
+        if (requestCode == REQUEST_TAKE_PHOTO && resultCode == RESULT_OK) {
+            Intent sendIntent = new Intent(LatestMemoriesActivity.this, DisplayActivity.class);
+
+            sendIntent.putExtra("filepath", mCurrentPhotoPath);
+
+            startActivity(sendIntent);
+        }
+    }
+
 
 
     public void setTransitions() {
