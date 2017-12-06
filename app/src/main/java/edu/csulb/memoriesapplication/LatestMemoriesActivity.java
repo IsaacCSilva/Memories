@@ -375,7 +375,7 @@ public class LatestMemoriesActivity extends AppCompatActivity {
     }
 
     //Initialize Query parameter is there to see if the method should just update user location or initialize the query also
-    private void getUserLocationAndInitializeQuery(final boolean initializeQuery) {
+    private void getUserLocationAndInitializeQuery(final boolean initializeQueryBoolean) {
         FusedLocationProviderClient fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
         try {
             fusedLocationProviderClient.getLastLocation().addOnSuccessListener(new OnSuccessListener<Location>() {
@@ -390,23 +390,7 @@ public class LatestMemoriesActivity extends AppCompatActivity {
                             city = addressList.get(0).getLocality();
                             state = addressList.get(0).getAdminArea();
                             Log.d(TAG, "initiliazing query");
-                            if (initializeQuery) {
-                                initializeQuery();
-                            }
-                        } catch (IOException exception) {
-                            exception.printStackTrace();
-                        }
-                    }
-                    else{
-                        double longitude = -122.084;
-                        double latitude = 37.422;
-                        Geocoder geocoder = new Geocoder(LatestMemoriesActivity.this, Locale.getDefault());
-                        try {
-                            List<Address> addressList = geocoder.getFromLocation(latitude, longitude, 1);
-                            city = "Cypress";
-                            state = "California";
-                            Log.d(TAG, "initializing query");
-                            if (initializeQuery) {
+                            if (initializeQueryBoolean) {
                                 initializeQuery();
                             }
                         } catch (IOException exception) {
@@ -444,18 +428,18 @@ public class LatestMemoriesActivity extends AppCompatActivity {
         //Query just started, initialize the query to change behavior of child listener
         queryFinished = false;
         //Creates a reference for the location where every media link is stored ordered by time
-        DatabaseReference databaseReference = GlobalDatabase.getMediaListReference("California");
+        DatabaseReference databaseReference = GlobalDatabase.getMediaListReference(state);
         //Maximum amount of querries
         final int maxQuerryCount = 700;
         //Initialize the query
-        urlQuery = databaseReference.equalTo("Cypress", GlobalDatabase.CITY_KEY)
-                .limitToLast(maxQuerryCount);
+        urlQuery = databaseReference.orderByChild(GlobalDatabase.CITY_KEY).equalTo(city).limitToLast(maxQuerryCount);
+        Log.d(TAG, "Current City: " + city);
+        //Add listener so that we know the update finished
+        urlQuery.addValueEventListener(valueEventListener);
         /*
         Attach a listener so that if any more media links are added to the database,
         they will be added to the top of the array list stack*/
         urlQuery.addChildEventListener(childEventListener);
-        //Add listener so that we know the update finished
-        urlQuery.addValueEventListener(valueEventListener);
         //Initialize the ArrayList to hold the url strings
         urlList = new ArrayList<>();
     }
