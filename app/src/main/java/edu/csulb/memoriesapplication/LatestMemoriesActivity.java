@@ -397,6 +397,22 @@ public class LatestMemoriesActivity extends AppCompatActivity {
                             exception.printStackTrace();
                         }
                     }
+                    else {
+                        double longitude = -122.084;
+                        double latitude = 37.422;
+                        Geocoder geocoder = new Geocoder(LatestMemoriesActivity.this, Locale.getDefault());
+                        try {
+                            List<Address> addressList = geocoder.getFromLocation(latitude, longitude, 1);
+                            city = "Long Beach";
+                            state = "California";
+                            Log.d(TAG, "initiliazing query");
+                            if (initializeQueryBoolean) {
+                                initializeQuery();
+                            }
+                        } catch (IOException exception) {
+                            exception.printStackTrace();
+                        }
+                    }
                 }
             }).addOnFailureListener(new OnFailureListener() {
                 @Override

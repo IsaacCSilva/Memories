@@ -2,6 +2,7 @@ package edu.csulb.memoriesapplication;
 
 import android.content.Context;
 import android.graphics.Color;
+import android.graphics.Matrix;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Handler;
@@ -19,6 +20,7 @@ import android.widget.RelativeLayout;
 import android.widget.VideoView;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.resource.bitmap.CenterCrop;
 import com.firebase.ui.storage.images.FirebaseImageLoader;
 import com.google.android.exoplayer2.ExoPlayerFactory;
 import com.google.android.exoplayer2.SimpleExoPlayer;
@@ -179,7 +181,7 @@ public class CardViewAdapter extends RecyclerView.Adapter<CardViewAdapter.CardVi
             Glide.with(context)
                     .using(new FirebaseImageLoader())
                     .load(imgReference)
-                    .centerCrop()
+                    .bitmapTransform(new RotateTransformation(context, 90), new CenterCrop(context))
                     .placeholder(R.color.cardview_dark_background)
                     .into(imageView);
             cardView.addView(imageView);

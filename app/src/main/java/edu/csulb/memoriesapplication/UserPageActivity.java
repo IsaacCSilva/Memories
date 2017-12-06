@@ -24,6 +24,7 @@ import android.view.Gravity;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
+import android.widget.GridView;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
@@ -71,6 +72,8 @@ public class UserPageActivity extends Activity implements View.OnClickListener {
     private boolean userEditingProfileIntro;
     private String prevUserIntro;
     private MyCoordinatorLayout coordinatorLayout;
+    private GridView gridView;
+    private ImageAdapter imageAdapter;
 
     @Override
     protected void onCreate(Bundle onSavedInstanceState) {
@@ -94,6 +97,9 @@ public class UserPageActivity extends Activity implements View.OnClickListener {
         viewContainer = (AppBarLayout) this.findViewById(R.id.view_container);
         progressBar = (ProgressBar) this.findViewById(R.id.progress_bar);
         viewContainer.setVisibility(View.GONE);
+        gridView = (GridView) this.findViewById(R.id.gridview);
+        imageAdapter = new ImageAdapter(this);
+        gridView.setAdapter(imageAdapter);
 
         //Instantiate all of the database variables
         mAuth = FirebaseAuth.getInstance();
@@ -438,6 +444,7 @@ public class UserPageActivity extends Activity implements View.OnClickListener {
                 //TODO: Finished adding the url list, upload grid after this
                 //I didn't know if you still needed to know if it was an image or video but added it just in case
                 //------------------Logic Here------------------//
+                loadGrid(urlList);
 
 
                 //----------------End Logic---------------------//
@@ -453,6 +460,29 @@ public class UserPageActivity extends Activity implements View.OnClickListener {
             }
         });
 
+    }
+
+    public void loadGrid(ArrayDeque<String> urlList){
+        String combinedString;
+        String uriString;
+        char uriType;
+        int size = urlList.size();
+        Log.d("urlList size", "" + size);
+
+        for(int i = 0; i < size; i++){
+            combinedString = urlList.poll();
+            Log.d("Combined String", combinedString);
+            uriString = combinedString.substring(0, combinedString.length() - 2);
+            Log.d("uriString", uriString);
+            uriType = combinedString.charAt(combinedString.length() -1);
+            Log.d("uriType", ""+ uriType);
+            if(uriType == 'i'){
+                imageAdapter.addImageUrlString(uriString);
+            }
+            else if(uriType == 'v'){
+            }
+            imageAdapter.notify();
+        }
     }
 
 }
