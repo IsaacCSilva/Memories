@@ -5,7 +5,6 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-<<<<<<< Updated upstream
     <ImageView
         android:id="@+id/corkboard_background"
         android:layout_width="match_parent"
@@ -29,7 +28,6 @@
             android:indeterminate="true" />
     </RelativeLayout>
 
-=======
     <ProgressBar
         android:id="@+id/progress_bar"
         android:layout_width="wrap_content"
@@ -42,7 +40,6 @@
         android:layout_alignParentTop="true"
         android:layout_height="match_parent"
         android:layout_width="match_parent"/>
->>>>>>> Stashed changes
     <android.support.v7.widget.RecyclerView
         android:id="@+id/recyclerView"
         android:layout_width="match_parent"
