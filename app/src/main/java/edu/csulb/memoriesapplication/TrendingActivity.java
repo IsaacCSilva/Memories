@@ -99,7 +99,7 @@ public class TrendingActivity extends AppCompatActivity {
             //Data has finished loading
             queryFinished = true;
             //Todo: Call method to populate the views here
-
+            
         }
 
         @Override
@@ -396,20 +396,22 @@ public class TrendingActivity extends AppCompatActivity {
         } else if (mediaType.charAt(0) == 'v') {
             urlString = urlString + 'v';
         }
-        urlList.add(0, urlString);
+        urlList.add(urlString);
     }
 
     //Retrieves a list of url links and returns null for an empty list
     private void initializeQuery() {
-        //Initialize the progress bar to appear in the activity while the activity is in the process of querrying
-        progressBar.
+        //Initialize the progress bar to appear in the activity while the activity is in the process of querying
+
+        //Query just started, initialize the query to change behavior of child listener
         queryFinished = false;
         //Creates a reference for the location where every media link is stored ordered by time
         DatabaseReference databaseReference = GlobalDatabase.getMediaListReference(state);
         //Maximum amount of querries
         final int maxQuerryCount = 700;
         //Initialize the query
-        Query urlQuery = databaseReference.equalTo(city, GlobalDatabase.CITY_KEY).limitToLast(maxQuerryCount);
+        Query urlQuery = databaseReference.equalTo(city, GlobalDatabase.CITY_KEY)
+                .limitToLast(maxQuerryCount).orderByChild(GlobalDatabase.LIKES_COUNT_KEY);
         /*
         Attach a listener so that if any more media links are added to the database,
         they will be added to the top of the array list stack*/

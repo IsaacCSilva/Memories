@@ -13,8 +13,8 @@ public class GlobalDatabase {
     public final static String GLOBAL_MEDIA_REFERENCE = "globalMedia_";
     public final static String URL_KEY = "url";
     public final static String MEDIA_TYPE_KEY = "mediaType";
-    public final static String STATE_KEY = "state";
     public final static String CITY_KEY = "city";
+    public final static String LIKES_COUNT_KEY = "likesCount";
 
     public enum MediaType{
         IMAGE,
@@ -31,6 +31,7 @@ public class GlobalDatabase {
             databaseReference.child(MEDIA_TYPE_KEY).setValue("video");
         }
         databaseReference.child(CITY_KEY).setValue(city);
+        databaseReference.child(LIKES_COUNT_KEY).setValue(0);
     }
 
     public static DatabaseReference getMediaListReference(String state) {

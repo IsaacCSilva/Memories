@@ -20,6 +20,7 @@ public class UserDatabase {
     final static String USER_MEDIA_TYPE_KEY = "mediaType";
     private final static String STATE_KEY = "state";
     private final static String CITY_KEY = "city";
+    private final static String LIKES_COUNT_KEY = "likesCount";
     public enum MediaType{
         IMAGE,
         VIDEO
@@ -43,6 +44,7 @@ public class UserDatabase {
         }
         userMediaListReference.child(STATE_KEY).setValue(state);
         userMediaListReference.child(CITY_KEY).setValue(city);
+        userMediaListReference.child(LIKES_COUNT_KEY).setValue(0);
     }
 
     static DatabaseReference getUserMediaListReference(String userId) {
