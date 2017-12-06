@@ -167,7 +167,6 @@ public class TrendingActivity extends AppCompatActivity{
         }
 
         //instantiate objects
-        ivImage = (ImageView) this.findViewById(R.id.ivImage);
         constraintLayout = (MyConstraintLayout) findViewById(R.id.constraintLayout);
         Intent startLeftNeighborActivity = new Intent(this, UserPageActivity.class).addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
         constraintLayout.setLeftPage(startLeftNeighborActivity);
