@@ -34,6 +34,7 @@ import com.google.android.exoplayer2.SimpleExoPlayer;
 import com.google.android.exoplayer2.ui.SimpleExoPlayerView;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
@@ -71,6 +72,7 @@ public class LatestMemoriesActivity extends AppCompatActivity {
     private String state;
     private boolean queryFinished;
     private ProgressBar progressBar;
+    private Query urlQuery;
 
     //TODO: there's a method below called userHasRefreshed.. just load again from the new urlList
 
@@ -84,11 +86,17 @@ public class LatestMemoriesActivity extends AppCompatActivity {
             //Data has finished loading
             queryFinished = true;
             //Todo: Call method to populate views here
+            Log.d(TAG, "Query finished!");
+            if(progressBar != null) {
+                progressBar.setVisibility(View.GONE);
+                recyclerView.setVisibility(View.VISIBLE);
+            }
+            loadPolaroids();
         }
 
         @Override
         public void onCancelled(DatabaseError databaseError) {
-
+            Log.d(TAG, "valueEventListener: Database Error");
         }
     };
 
@@ -118,7 +126,7 @@ public class LatestMemoriesActivity extends AppCompatActivity {
 
         @Override
         public void onCancelled(DatabaseError databaseError) {
-
+            Log.d(TAG, "childEventListener: Database Error");
         }
     };
 
@@ -126,7 +134,13 @@ public class LatestMemoriesActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_trending);
+        setContentView(R.layout.activity_latest);
+
+        //Initialize the progress bar to appear in the activity while the activity is in the process of querying
+        progressBar = (ProgressBar) this.findViewById(R.id.latest_progress_bar);
+        if(progressBar == null){
+            Log.d(TAG, "Progress Bar is null");
+        }
 
         //set transitions
         setTransitions();
@@ -138,10 +152,12 @@ public class LatestMemoriesActivity extends AppCompatActivity {
         accessLocationPermission = UserPermission.checkUserPermission(this, UserPermission.Permission.LOCATION_PERMISSION);
 
         //If accessLocationPermission variable is false, cannot display anything... ask for user's permission
+        Log.d(TAG, "Location permission = " + accessLocationPermission);
         if(!accessLocationPermission) {
             requestPermission();
         } else {
             //Application has permission to use the user's location, initialize the query
+            Log.d(TAG, "Getting User location and initializing query");
             getUserLocationAndInitializeQuery(true);
         }
 
@@ -324,6 +340,7 @@ public class LatestMemoriesActivity extends AppCompatActivity {
     }
 
     private void loadPolaroids(){
+        polaroids.clear();
         String combinedString;
         String uriString;
         char uriType;
@@ -372,6 +389,7 @@ public class LatestMemoriesActivity extends AppCompatActivity {
                             List<Address> addressList = geocoder.getFromLocation(latitude, longitude, 1);
                             city = addressList.get(0).getLocality();
                             state = addressList.get(0).getAdminArea();
+                            Log.d(TAG, "initiliazing query");
                             if (initializeQuery) {
                                 initializeQuery();
                             }
@@ -379,6 +397,27 @@ public class LatestMemoriesActivity extends AppCompatActivity {
                             exception.printStackTrace();
                         }
                     }
+                    else{
+                        double longitude = -122.084;
+                        double latitude = 37.422;
+                        Geocoder geocoder = new Geocoder(LatestMemoriesActivity.this, Locale.getDefault());
+                        try {
+                            List<Address> addressList = geocoder.getFromLocation(latitude, longitude, 1);
+                            city = "Cypress";
+                            state = "California";
+                            Log.d(TAG, "initializing query");
+                            if (initializeQuery) {
+                                initializeQuery();
+                            }
+                        } catch (IOException exception) {
+                            exception.printStackTrace();
+                        }
+                    }
+                }
+            }).addOnFailureListener(new OnFailureListener() {
+                @Override
+                public void onFailure(@NonNull Exception e) {
+                    Log.d(TAG, "Failed to get location");
                 }
             });
         } catch (SecurityException exception) {
@@ -401,15 +440,15 @@ public class LatestMemoriesActivity extends AppCompatActivity {
     //Retrieves a list of url links and returns null for an empty list
     private void initializeQuery() {
         //Initialize the progress bar to appear in the activity while the activity is in the process of querying
-        progressBar = (ProgressBar) this.findViewById(R.id.latest_progress_bar);
+        progressBar.setVisibility(View.VISIBLE);
         //Query just started, initialize the query to change behavior of child listener
         queryFinished = false;
         //Creates a reference for the location where every media link is stored ordered by time
-        DatabaseReference databaseReference = GlobalDatabase.getMediaListReference(state);
+        DatabaseReference databaseReference = GlobalDatabase.getMediaListReference("California");
         //Maximum amount of querries
         final int maxQuerryCount = 700;
         //Initialize the query
-        Query urlQuery = databaseReference.equalTo(city, GlobalDatabase.CITY_KEY)
+        urlQuery = databaseReference.equalTo("Cypress", GlobalDatabase.CITY_KEY)
                 .limitToLast(maxQuerryCount);
         /*
         Attach a listener so that if any more media links are added to the database,
@@ -430,6 +469,7 @@ public class LatestMemoriesActivity extends AppCompatActivity {
             initializeQuery();
         }
         //Todo: refresh the page with the same urlList
+        recyclerView.scrollToPosition(0);
     }
 
 }
