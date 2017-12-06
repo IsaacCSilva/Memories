@@ -1,10 +1,18 @@
 package edu.csulb.memoriesapplication;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.Dialog;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.res.Configuration;
+import android.content.res.Resources;
 import android.os.Bundle;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.SeekBar;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toolbar;
 import android.view.Menu;
@@ -12,48 +20,91 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
 
+import java.util.Locale;
+
 public class Setting extends Activity{
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
-        final TextView textSwitch = (TextView) findViewById(R.id.textSwitch); // switch displays for radius
         Toolbar toolbar = (Toolbar) findViewById(R.id.tool_bar);
         setSupportActionBar(toolbar);
-        Button b = (Button) findViewById(R.id.button2);
-
-        b.setOnClickListener(new View.OnClickListener(){
-            @Override
-            public void onClick(View view){
-                Intent helpIntent = new Intent(Setting.this,HelpActivity.class);
-                startActivity(helpIntent);
-            } });
-        final SeekBar s = (SeekBar) findViewById(R.id.seekBar);
-        textSwitch.setText("Covered: " + s.getProgress() + "/" + s.getMax());
-        s.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            int progress = 0;
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
-                progress = i;
-                Toast.makeText(getApplicationContext(), "Changing Radius", Toast.LENGTH_SHORT).show();
+        Button b2 = (Button) findViewById(R.id.button2);
+        Button b1 = (Button) findViewById(R.id.button1);
+        b2.setOnClickListener((View.OnClickListener) this);
+        b1.setOnClickListener((View.OnClickListener) this);}
+            public void onClick(View view) {
+                switch (view.getId()) {
+                    case R.id.button2:
+                        Intent helpIntent = new Intent(Setting.this, HelpActivity.class);
+                        startActivity(helpIntent);
+                        break;
+                    case R.id.button1:
+                        final Intent editIntent = new Intent(Setting.this, EditProfile.class);
+                        startActivity(editIntent);
+                        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(Setting.this);
+                        alertDialogBuilder
+                                .setTitle("Are you sure you want to proceed with the edit? ")
+                                .setCancelable(false)
+                                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                                    public void onClick(DialogInterface dialog, int id) {
+                                        startActivity(editIntent);
+                                    }
+                                })
+                                .setNegativeButton("No", new DialogInterface.OnClickListener() {
+                                    public void onClick(DialogInterface dialog, int id) {
+                                        dialog.cancel();
+                                    }
+                                });
+                        alertDialogBuilder.create();
+                        Dialog d = alertDialogBuilder.show();
+                        int textViewId = d.getContext().getResources().getIdentifier("android:id/alertTitle", null, null);
+                        TextView tv = (TextView) d.findViewById(textViewId);
+                        tv.setTextColor(getResources().getColor(R.color.colorAccent));
+                        break;
+                }
             }
 
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {
 
-            }
-
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {
-                textSwitch.setText("Covered: "  + progress + "/" + s.getMax());
-                Toast.makeText(getApplicationContext(), "Radius", Toast.LENGTH_SHORT).show();;
-            }
-        });
-    }
 
     private void setSupportActionBar(Toolbar toolbar) {
     }
+    public void loadSpinnerData() {
+        Spinner spinner = (Spinner) findViewById(R.id.spinner);
+        // Create an ArrayAdapter using the string array and a default spinner layout
+        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this,
+                R.array.Languages, android.R.layout.simple_spinner_item);
+// Specify the layout to use when the list of choices appears
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        // Apply the adapter to the spinner
+        spinner.setAdapter(adapter);
+    }
+   public Resources res;
+   public String locale;
 
+    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+        Configuration config;
+        config = new Configuration(res.getConfiguration());
+        String label = parent.getItemAtPosition(position).toString();
+        if (label == "French") {
+            config.locale = new Locale("fr");
+        } else if (label == "Chinese") {
+            config.locale = new Locale("zh");
+        } else if (label == "Spanish") {
+            config.locale = new Locale("es");
+
+        } else if (label == "Arabic") {
+            config.locale = new Locale("ar");
+
+        } else {
+            label = "English(default)";
+            config.locale = Locale.ENGLISH;
+        }
+        res.updateConfiguration(config, res.getDisplayMetrics());
+    }
+
+
+public void onNothingSelected(AdapterView<?> adapterView){}
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -71,5 +122,4 @@ public class Setting extends Activity{
         }
 
         return super.onOptionsItemSelected(item);
-    }
-}
+    }}

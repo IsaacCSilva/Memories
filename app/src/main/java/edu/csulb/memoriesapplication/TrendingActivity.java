@@ -228,10 +228,10 @@ public class TrendingActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem items) {
         switch (items.getItemId()) {
             case R.id.action_settings: {
-                final Intent intent = new Intent(TrendingActivity.this, Setting.class);
+                Intent intent = new Intent(TrendingActivity.this, Setting.class);
                 startActivity(intent);
                 Toast.makeText(getBaseContext(), "Information: ", Toast.LENGTH_SHORT).show();
-                return true;
+                break;
             }
             case R.id.action_cam: {
                 if (accessLocationPermission) {

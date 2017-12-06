@@ -1,7 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+<<<<<<< Updated upstream
     <color name="colorPrimary">#3F51B5</color>
     <color name="colorPrimaryDark">#303f9f</color>
+=======
+    <color name="colorPrimary">#93ddff</color>
+    <color name="colorPrimaryDark">#93ddff</color>
+>>>>>>> Stashed changes
     <color name="colorAccent">#FF4081</color>
     <color name="White">#ffffff</color>
 </resources>
