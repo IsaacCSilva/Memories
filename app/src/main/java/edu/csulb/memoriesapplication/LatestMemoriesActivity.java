@@ -1,10 +1,12 @@
 package edu.csulb.memoriesapplication;
 
-import android.*;
 import android.app.SearchManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.location.Address;
+import android.location.Geocoder;
+import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -24,12 +26,15 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.MediaController;
+import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.SearchView;
 import android.widget.Toast;
 import com.google.android.exoplayer2.SimpleExoPlayer;
 import com.google.android.exoplayer2.ui.SimpleExoPlayerView;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -39,8 +44,9 @@ import com.google.firebase.database.ValueEventListener;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
 
 /**
  * Created by Danie on 10/16/2017.
@@ -53,7 +59,7 @@ public class LatestMemoriesActivity extends AppCompatActivity {
     private ArrayList<Polaroid> polaroids;
     private CardViewAdapter rvAdapter;
     private MyConstraintLayout constraintLayout;
-    private ArrayDeque<String> urlList;
+    private ArrayList<String> urlList;
     private boolean accessLocationPermission;
     private static final int REQUEST_TAKE_PHOTO = 1;
     private static final int PERMISSION_REQUEST_CODE = 1052;
@@ -61,26 +67,40 @@ public class LatestMemoriesActivity extends AppCompatActivity {
     private SimpleExoPlayerView currentlyPlayingVideo;
     private String mCurrentPhotoPath;
     private boolean cameraRequest;
+    private String city;
+    private String state;
+    private boolean queryFinished;
+    private ProgressBar progressBar;
 
-    /*TODO: Card Views appear after the query finishes, have them actually be there right when the activity starts
-    TODO:Populate those card views after the fact of the above and do the same for trending activity
-    TODO: Add the location title on top of the polaroids, I will query them in once I get the location attribute attachment finished
-     */
+    //TODO: there's a method below called userHasRefreshed.. just load again from the new urlList
 
-    //Listener that is attached to the query
+    //Value event listener which is first called with the initial query
+    ValueEventListener valueEventListener = new ValueEventListener() {
+        @Override
+        public void onDataChange(DataSnapshot dataSnapshot) {
+            for(DataSnapshot mediaSnapshot : dataSnapshot.getChildren()) {
+                addToUrlList(mediaSnapshot);
+            }
+            //Data has finished loading
+            queryFinished = true;
+            //Todo: Call method to populate views here
+        }
+
+        @Override
+        public void onCancelled(DatabaseError databaseError) {
+
+        }
+    };
+
+
     ChildEventListener childEventListener = new ChildEventListener() {
+        //A new item has been added to the database
         @Override
         public void onChildAdded(DataSnapshot dataSnapshot, String s) {
-            //Receive the url string and store it in a list
-            String urlString = (String) dataSnapshot.child(GlobalDatabase.URL_KEY).getValue();
-            String mediaType = (String) dataSnapshot.child(GlobalDatabase.MEDIA_TYPE_KEY).getValue();
-            if(mediaType.charAt(0) == 'i'){
-                urlString = urlString + 'i';
-            } else if(mediaType.charAt(0) == 'v') {
-                urlString = urlString + 'v';
+            //Only starts adding to the url list if the query is finished for the new ones
+            if(queryFinished) {
+                addToUrlList(dataSnapshot);
             }
-            urlList.addFirst(urlString);
-            Log.d(TAG, urlString);
         }
 
         @Override
@@ -94,18 +114,6 @@ public class LatestMemoriesActivity extends AppCompatActivity {
         @Override
         public void onChildMoved(DataSnapshot dataSnapshot, String s) {
 
-        }
-
-        @Override
-        public void onCancelled(DatabaseError databaseError) {
-
-        }
-    };
-
-    ValueEventListener valueEventListener = new ValueEventListener() {
-        @Override
-        public void onDataChange(DataSnapshot dataSnapshot) {
-            loadPolaroids();
         }
 
         @Override
@@ -134,7 +142,7 @@ public class LatestMemoriesActivity extends AppCompatActivity {
             requestPermission();
         } else {
             //Application has permission to use the user's location, initialize the query
-            initializeQuery();
+            getUserLocationAndInitializeQuery(true);
         }
 
         //instantiate objects
@@ -315,24 +323,6 @@ public class LatestMemoriesActivity extends AppCompatActivity {
         getWindow().setReturnTransition(enterSlide);
     }
 
-    //Retrieves a list of url links and returns null for an empty list
-    private void initializeQuery() {
-        //Creates a reference for the location where every media link is stored ordered by time
-        DatabaseReference databaseReference = GlobalDatabase.getMediaListReference("hi");
-        //Set the maximum amount of queries to be received at once
-        int maxQuerySize = 30;
-        //Initialize the query located as a private class variable
-        Query urlQuery = databaseReference.limitToFirst(maxQuerySize);
-        /*
-        Attach a listener so that if any more media links are added to the database,
-        they will be added to the top of the array list stack*/
-        urlQuery.addChildEventListener(childEventListener);
-        //Add listener so that we know the update finished
-        urlQuery.addValueEventListener(valueEventListener);
-        //Initialize the ArrayList to hold the url strings
-        urlList = new ArrayDeque<>(maxQuerySize);
-    }
-
     private void loadPolaroids(){
         String combinedString;
         String uriString;
@@ -341,7 +331,7 @@ public class LatestMemoriesActivity extends AppCompatActivity {
         Log.d("urlList size", "" + size);
 
         for(int i = 0; i < size; i++){
-            combinedString = urlList.poll();
+            combinedString = urlList.get(i);
             Log.d("Combined String", combinedString);
             uriString = combinedString.substring(0, combinedString.length() - 2);
             Log.d("uriString", uriString);
@@ -365,6 +355,81 @@ public class LatestMemoriesActivity extends AppCompatActivity {
             SimpleExoPlayer playerToPause = currentlyPlayingVideo.getPlayer();
             playerToPause.setPlayWhenReady(false);
         }
+    }
+
+    //Initialize Query parameter is there to see if the method should just update user location or initialize the query also
+    private void getUserLocationAndInitializeQuery(final boolean initializeQuery) {
+        FusedLocationProviderClient fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
+        try {
+            fusedLocationProviderClient.getLastLocation().addOnSuccessListener(new OnSuccessListener<Location>() {
+                @Override
+                public void onSuccess(Location location) {
+                    if (location != null) {
+                        double longitude = location.getLongitude();
+                        double latitude = location.getLatitude();
+                        Geocoder geocoder = new Geocoder(LatestMemoriesActivity.this, Locale.getDefault());
+                        try {
+                            List<Address> addressList = geocoder.getFromLocation(latitude, longitude, 1);
+                            city = addressList.get(0).getLocality();
+                            state = addressList.get(0).getAdminArea();
+                            if (initializeQuery) {
+                                initializeQuery();
+                            }
+                        } catch (IOException exception) {
+                            exception.printStackTrace();
+                        }
+                    }
+                }
+            });
+        } catch (SecurityException exception) {
+            Log.d(TAG, "Security Exception : " + exception.toString());
+        }
+    }
+
+    //Method that adds the url to the urlList ArrayList from a DataSnapshot object
+    private void addToUrlList(DataSnapshot mediaSnapshot) {
+        String urlString = (String) mediaSnapshot.child(GlobalDatabase.URL_KEY).getValue();
+        String mediaType = (String) mediaSnapshot.child(GlobalDatabase.MEDIA_TYPE_KEY).getValue();
+        if (mediaType.charAt(0) == 'i') {
+            urlString = urlString + 'i';
+        } else if (mediaType.charAt(0) == 'v') {
+            urlString = urlString + 'v';
+        }
+        urlList.add(urlString);
+    }
+
+    //Retrieves a list of url links and returns null for an empty list
+    private void initializeQuery() {
+        //Initialize the progress bar to appear in the activity while the activity is in the process of querying
+        progressBar = (ProgressBar) this.findViewById(R.id.latest_progress_bar);
+        //Query just started, initialize the query to change behavior of child listener
+        queryFinished = false;
+        //Creates a reference for the location where every media link is stored ordered by time
+        DatabaseReference databaseReference = GlobalDatabase.getMediaListReference(state);
+        //Maximum amount of querries
+        final int maxQuerryCount = 700;
+        //Initialize the query
+        Query urlQuery = databaseReference.equalTo(city, GlobalDatabase.CITY_KEY)
+                .limitToLast(maxQuerryCount);
+        /*
+        Attach a listener so that if any more media links are added to the database,
+        they will be added to the top of the array list stack*/
+        urlQuery.addChildEventListener(childEventListener);
+        //Add listener so that we know the update finished
+        urlQuery.addValueEventListener(valueEventListener);
+        //Initialize the ArrayList to hold the url strings
+        urlList = new ArrayList<>();
+    }
+
+    private void userHasRefreshed() {
+        String prevCity = city;
+        //Get user location but do not re-initialize the query
+        getUserLocationAndInitializeQuery(false);
+        if(!prevCity.equals(city)) {
+            //User has moved, but don't need to do any additional coding
+            initializeQuery();
+        }
+        //Todo: refresh the page with the same urlList
     }
 
 }
