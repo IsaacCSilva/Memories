@@ -318,7 +318,7 @@ public class LatestMemoriesActivity extends AppCompatActivity {
     //Retrieves a list of url links and returns null for an empty list
     private void initializeQuery() {
         //Creates a reference for the location where every media link is stored ordered by time
-        DatabaseReference databaseReference = GlobalDatabase.getMediaListReference();
+        DatabaseReference databaseReference = GlobalDatabase.getMediaListReference("hi");
         //Set the maximum amount of queries to be received at once
         int maxQuerySize = 30;
         //Initialize the query located as a private class variable
