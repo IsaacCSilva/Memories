@@ -232,11 +232,11 @@ public class UserService extends IntentService {
                                             List<Address> addressList = geocoder.getFromLocation(latitude, longitude, 1);
                                             city = addressList.get(0).getLocality();
                                             state = addressList.get(0).getAdminArea();
+                                            FirebaseMediaStorage firebaseMediaStorage = new FirebaseMediaStorage();
+                                            firebaseMediaStorage.saveImageToFirebaseStorage(image, city, state);
                                         } catch (IOException exception) {
                                             exception.printStackTrace();
                                         }
-                                        FirebaseMediaStorage firebaseMediaStorage = new FirebaseMediaStorage();
-                                        firebaseMediaStorage.saveImageToFirebaseStorage(image, city, state);
                                     } else {
                                         Log.d(TAG, "Location is null...");
                                     }

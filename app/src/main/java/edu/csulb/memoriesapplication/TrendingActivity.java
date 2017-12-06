@@ -6,10 +6,14 @@ import android.app.SearchManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.location.Address;
+import android.location.Geocoder;
+import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
+import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -36,18 +40,31 @@ import android.widget.VideoView;
 
 import com.google.android.exoplayer2.SimpleExoPlayer;
 import com.google.android.exoplayer2.ui.SimpleExoPlayerView;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.database.ChildEventListener;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.Query;
+import com.google.firebase.database.ValueEventListener;
 
 import java.io.File;
 import java.io.IOException;
+import java.sql.Array;
 import java.text.SimpleDateFormat;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
+import java.util.Locale;
 
 /**
  * Created by Danie on 10/16/2017.
  */
 
-public class TrendingActivity extends AppCompatActivity{
+public class TrendingActivity extends AppCompatActivity {
 
     //added
     private LinearLayoutManager linearLayoutManager;
@@ -61,8 +78,66 @@ public class TrendingActivity extends AppCompatActivity{
     private static final int PERMISSION_REQUEST_CODE = 1052;
     private boolean cameraRequest;
     private String mCurrentPhotoPath;
+    private String TAG = "TrendingActivity";
+    private String city;
+    private String state;
+    private ArrayList<String> urlList;
+    private boolean queryFinished;
 
-    //Todo: Daniel's work centralize a way to get location so not alot of copy and paste
+    //Todo: There is a method at the bottom of the activity called userHasRefreshed, urlList is always updated so no need to worry about that
+
+    //Value event listener for the query
+    ValueEventListener valueEventListener = new ValueEventListener() {
+        /*Adds the last *amount* of queries and adds them in to the head of the ArrayDeque each time to show
+        most recent ones first*/
+        @Override
+        public void onDataChange(DataSnapshot dataSnapshot) {
+            for (DataSnapshot mediaSnapshot : dataSnapshot.getChildren()) {
+                addToUrlList(mediaSnapshot);
+            }
+            //Data has finished loading
+            queryFinished = true;
+            //Todo: Call method to populate the views here
+
+        }
+
+        @Override
+        public void onCancelled(DatabaseError databaseError) {
+
+        }
+    };
+
+    //Child event listener for the query
+    ChildEventListener childEventListener = new ChildEventListener() {
+        //A new item has been added to the database
+        @Override
+        public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+            //Only starts adding to the url list if the query is finished for the new ones
+            if(queryFinished) {
+                addToUrlList(dataSnapshot);
+            }
+        }
+
+        @Override
+        public void onChildChanged(DataSnapshot dataSnapshot, String s) {
+
+        }
+
+        @Override
+        public void onChildRemoved(DataSnapshot dataSnapshot) {
+
+        }
+
+        @Override
+        public void onChildMoved(DataSnapshot dataSnapshot, String s) {
+
+        }
+
+        @Override
+        public void onCancelled(DatabaseError databaseError) {
+
+        }
+    };
 
 
     @Override
@@ -73,7 +148,7 @@ public class TrendingActivity extends AppCompatActivity{
         //get calling activity
         Intent intent = getIntent();
         int slideDirection = 0;
-        if(intent != null){
+        if (intent != null) {
             slideDirection = intent.getIntExtra("slide edge", 0);
         }
 
@@ -87,10 +162,11 @@ public class TrendingActivity extends AppCompatActivity{
         accessLocationPermission = UserPermission.checkUserPermission(this, UserPermission.Permission.LOCATION_PERMISSION);
 
         //If accessLocationPermission variable is false, cannot display anything... ask for user's permission
-        if(!accessLocationPermission) {
+        if (!accessLocationPermission) {
             requestPermission();
         } else {
-            //Todo: we have permission, query based on location
+            //Get user location and initialize the query, param true to initialize query
+            getUserLocationAndInitializeQuery(true);
         }
 
         //instantiate objects
@@ -165,7 +241,7 @@ public class TrendingActivity extends AppCompatActivity{
                 return true;
             }
             case R.id.action_cam: {
-                if(accessLocationPermission) {
+                if (accessLocationPermission) {
                     dispatchTakePictureIntent();
                     return true;
                 } else {
@@ -178,8 +254,8 @@ public class TrendingActivity extends AppCompatActivity{
     }
 
     //Asks for the user's permission, double check just in case, don't want to ask the user a second time
-    private void requestPermission(){
-        if(ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) !=
+    private void requestPermission() {
+        if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) !=
                 PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION},
                     PERMISSION_REQUEST_CODE);
@@ -190,12 +266,12 @@ public class TrendingActivity extends AppCompatActivity{
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        switch(requestCode) {
+        switch (requestCode) {
             case PERMISSION_REQUEST_CODE: {
-                if(grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     //Permission has been granted
                     accessLocationPermission = true;
-                    if(cameraRequest) {
+                    if (cameraRequest) {
                         dispatchTakePictureIntent();
                         cameraRequest = false;
                     }
@@ -250,22 +326,20 @@ public class TrendingActivity extends AppCompatActivity{
     }
 
 
-
-
     public void setTransitions(int slideDirection) {
-        Log.d("Slide Direction", "" +slideDirection);
+        Log.d("Slide Direction", "" + slideDirection);
         Slide enterSlide = new Slide();
         Slide exitSlide = new Slide();
 
         enterSlide.setDuration(500);
         exitSlide.setDuration(500);
 
-        if(slideDirection == 0){
+        if (slideDirection == 0) {
             enterSlide.setSlideEdge(Gravity.RIGHT);
             exitSlide.setSlideEdge(Gravity.RIGHT);
         }
 
-        if(slideDirection == 1){
+        if (slideDirection == 1) {
             enterSlide.setSlideEdge(Gravity.START);
             exitSlide.setSlideEdge(Gravity.START);
         }
@@ -281,12 +355,67 @@ public class TrendingActivity extends AppCompatActivity{
         Log.d("Activity", "BACK PRESSED");
     }
 
-//    @Override
-//    public void onBackPressed(){
-//        super.onBackPressed();
-//        Slide slide = new Slide();
-//        slide.setDuration(500);
-//        slide.setSlideEdge(Gravity.RIGHT);
-//        getWindow().setExitTransition(slide);
-//    }
+    //Initialize Query parameter is there to see if the method should just update user location or initialize the query also
+    private void getUserLocationAndInitializeQuery(final boolean initializeQuery) {
+        FusedLocationProviderClient fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
+        try {
+            fusedLocationProviderClient.getLastLocation().addOnSuccessListener(new OnSuccessListener<Location>() {
+                @Override
+                public void onSuccess(Location location) {
+                    if (location != null) {
+                        double longitude = location.getLongitude();
+                        double latitude = location.getLatitude();
+                        Geocoder geocoder = new Geocoder(TrendingActivity.this, Locale.getDefault());
+                        try {
+                            List<Address> addressList = geocoder.getFromLocation(latitude, longitude, 1);
+                            city = addressList.get(0).getLocality();
+                            state = addressList.get(0).getAdminArea();
+                            if (initializeQuery) {
+                                initializeQuery();
+                            }
+                        } catch (IOException exception) {
+                            exception.printStackTrace();
+                        }
+                    }
+                }
+            });
+        } catch (SecurityException exception) {
+            Log.d(TAG, "Security Exception : " + exception.toString());
+        }
+    }
+
+    private void addToUrlList(DataSnapshot mediaSnapshot) {
+        String urlString = (String) mediaSnapshot.child(GlobalDatabase.URL_KEY).getValue();
+        String mediaType = (String) mediaSnapshot.child(GlobalDatabase.MEDIA_TYPE_KEY).getValue();
+        if (mediaType.charAt(0) == 'i') {
+            urlString = urlString + 'i';
+        } else if (mediaType.charAt(0) == 'v') {
+            urlString = urlString + 'v';
+        }
+        urlList.add(0, urlString);
+    }
+
+    //Retrieves a list of url links and returns null for an empty list
+    private void initializeQuery() {
+        queryFinished = false;
+        //Creates a reference for the location where every media link is stored ordered by time
+        DatabaseReference databaseReference = GlobalDatabase.getMediaListReference(state);
+        //Maximum amount of querries
+        final int maxQuerryCount = 700;
+        //Initialize the query
+        Query urlQuery = databaseReference.equalTo(city, GlobalDatabase.CITY_KEY).limitToLast(maxQuerryCount);
+        /*
+        Attach a listener so that if any more media links are added to the database,
+        they will be added to the top of the array list stack*/
+        urlQuery.addChildEventListener(childEventListener);
+        //Add listener so that we know the update finished
+        urlQuery.addValueEventListener(valueEventListener);
+        //Initialize the ArrayList to hold the url strings
+        urlList = new ArrayList<>();
+    }
+
+    private void userHasRefreshed() {
+
+    }
+
 }

@@ -53,7 +53,6 @@ public class LatestMemoriesActivity extends AppCompatActivity {
     private ArrayList<Polaroid> polaroids;
     private CardViewAdapter rvAdapter;
     private MyConstraintLayout constraintLayout;
-    private Query urlQuery;
     private ArrayDeque<String> urlList;
     private boolean accessLocationPermission;
     private static final int REQUEST_TAKE_PHOTO = 1;
@@ -73,8 +72,8 @@ public class LatestMemoriesActivity extends AppCompatActivity {
         @Override
         public void onChildAdded(DataSnapshot dataSnapshot, String s) {
             //Receive the url string and store it in a list
-            String urlString = (String) dataSnapshot.child(GlobalDatabase.getUrlKey()).getValue();
-            String mediaType = (String) dataSnapshot.child(GlobalDatabase.getMediaTypeKey()).getValue();
+            String urlString = (String) dataSnapshot.child(GlobalDatabase.URL_KEY).getValue();
+            String mediaType = (String) dataSnapshot.child(GlobalDatabase.MEDIA_TYPE_KEY).getValue();
             if(mediaType.charAt(0) == 'i'){
                 urlString = urlString + 'i';
             } else if(mediaType.charAt(0) == 'v') {
@@ -323,7 +322,7 @@ public class LatestMemoriesActivity extends AppCompatActivity {
         //Set the maximum amount of queries to be received at once
         int maxQuerySize = 30;
         //Initialize the query located as a private class variable
-        urlQuery = databaseReference.limitToFirst(maxQuerySize);
+        Query urlQuery = databaseReference.limitToFirst(maxQuerySize);
         /*
         Attach a listener so that if any more media links are added to the database,
         they will be added to the top of the array list stack*/
