@@ -83,6 +83,7 @@ public class TrendingActivity extends AppCompatActivity {
     private String state;
     private ArrayList<String> urlList;
     private boolean queryFinished;
+    private ProgressBar progressBar;
 
     //Todo: There is a method at the bottom of the activity called userHasRefreshed, urlList is always updated so no need to worry about that
 
@@ -144,6 +145,9 @@ public class TrendingActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_trending);
+
+        //Initialize progress bar
+        progressBar = (ProgressBar) this.findViewById(R.id.trending_progress_bar);
 
         //get calling activity
         Intent intent = getIntent();
@@ -397,6 +401,8 @@ public class TrendingActivity extends AppCompatActivity {
 
     //Retrieves a list of url links and returns null for an empty list
     private void initializeQuery() {
+        //Initialize the progress bar to appear in the activity while the activity is in the process of querrying
+        progressBar.
         queryFinished = false;
         //Creates a reference for the location where every media link is stored ordered by time
         DatabaseReference databaseReference = GlobalDatabase.getMediaListReference(state);

@@ -431,6 +431,7 @@ public class UserPageActivity extends Activity implements View.OnClickListener {
                         urlString = urlString + 'i';
                     } else if(mediaType.charAt(0) == 'v') {
                         urlString = urlString + 'v';
+                        urlString = urlString + 'v';
                     }
                     urlList.addFirst(urlString);
                 }
