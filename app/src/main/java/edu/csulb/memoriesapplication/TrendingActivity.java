@@ -88,7 +88,9 @@ public class TrendingActivity extends AppCompatActivity{
             //Data has finished loading
             queryFinished = true;
             //Todo: Call method to populate the views here
-            
+            progressBar.setVisibility(View.GONE);
+            recyclerView.setVisibility(View.VISIBLE);
+            loadPolaroids();
         }
 
         @Override
@@ -413,6 +415,32 @@ public class TrendingActivity extends AppCompatActivity{
 
     private void userHasRefreshed() {
 
+    }
+
+    private void loadPolaroids(){
+        polaroids.clear();
+        String combinedString;
+        String uriString;
+        char uriType;
+        int size = urlList.size();
+        Log.d("urlList size", "" + size);
+
+        for(int i = 0; i < size; i++){
+            combinedString = urlList.get(i);
+            Log.d("Combined String", combinedString);
+            uriString = combinedString.substring(0, combinedString.length() - 2);
+            Log.d("uriString", uriString);
+            uriType = combinedString.charAt(combinedString.length() -1);
+            Log.d("uriType", ""+ uriType);
+            if(uriType == 'i'){
+                polaroids.add(new Polaroid(null, Uri.parse(uriString)));
+            }
+            else if(uriType == 'v'){
+                Log.d("Latest loadPolaroid()", "loading video");
+                polaroids.add(new Polaroid(Uri.parse(uriString), null));
+            }
+            rvAdapter.notifyDataSetChanged();
+        }
     }
 
 }

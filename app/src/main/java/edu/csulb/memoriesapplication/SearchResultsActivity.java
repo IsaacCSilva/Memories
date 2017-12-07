@@ -2,14 +2,21 @@ package edu.csulb.memoriesapplication;
 
 import android.app.SearchManager;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.renderscript.Sampler;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.CardView;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.View;
 import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import com.google.android.exoplayer2.SimpleExoPlayer;
+import com.google.android.exoplayer2.ui.SimpleExoPlayerView;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -29,6 +36,12 @@ public class SearchResultsActivity extends AppCompatActivity {
     private final String TAG = "SearchResultsActivity";
     private ProgressBar progressBar;
 
+    private LinearLayoutManager linearLayoutManager;
+    private RecyclerView recyclerView;
+    private ArrayList<Polaroid> polaroids;
+    private CardViewAdapter rvAdapter;
+    private MyConstraintLayout constraintLayout;
+
     private ValueEventListener valueEventListener = new ValueEventListener() {
         @Override
         public void onDataChange(DataSnapshot dataSnapshot) {
@@ -37,7 +50,10 @@ public class SearchResultsActivity extends AppCompatActivity {
             }
             //Data has finished loading
             queryFinished = true;
+            //Todo: Call method to populate the views here
             progressBar.setVisibility(View.GONE);
+            recyclerView.setVisibility(View.VISIBLE);
+            loadPolaroids();
         }
 
         @Override
@@ -81,8 +97,52 @@ public class SearchResultsActivity extends AppCompatActivity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_search_results);
+
         //Initialize the progress bar
         progressBar = (ProgressBar) this.findViewById(R.id.search_progress_bar);
+
+        //instantiate objects
+        constraintLayout = (MyConstraintLayout) findViewById(R.id.constraintLayout);
+        Intent startLeftNeighborActivity = new Intent(this, UserPageActivity.class).addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+        constraintLayout.setLeftPage(startLeftNeighborActivity);
+        Intent startRightNeighborActivity = new Intent(this, LatestMemoriesActivity.class).addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+        constraintLayout.setRightPage(startRightNeighborActivity);
+        polaroids = new ArrayList<Polaroid>();
+        rvAdapter = new CardViewAdapter(this, polaroids);
+        recyclerView = (RecyclerView) findViewById(R.id.search_recyclerView);
+        linearLayoutManager = new LinearLayoutManager(this.getApplicationContext());
+        recyclerView.setLayoutManager(linearLayoutManager);
+        recyclerView.setAdapter(rvAdapter);
+        recyclerView.setOnScrollChangeListener(new View.OnScrollChangeListener() {
+            @Override
+            public void onScrollChange(View v, int scrollX, int scrollY, int oldScrollX, int oldScrollY) {
+                int position1 = ((LinearLayoutManager) recyclerView.getLayoutManager()).findFirstCompletelyVisibleItemPosition();
+                int position2 = ((LinearLayoutManager) recyclerView.getLayoutManager()).findFirstVisibleItemPosition();
+                Log.d("Latest Memories/first completely visible item position", "" + position1);
+                if (position1 != -1) {
+                    View view = (View) ((LinearLayoutManager) recyclerView.getLayoutManager()).findViewByPosition(position1);
+                    if (view instanceof CardView) {
+                        Log.d("View is of type", "CardView");
+                        View childView = (View) ((CardView) view).getChildAt(0);
+                        if (childView instanceof RelativeLayout) {
+                            SimpleExoPlayerView videoView = (SimpleExoPlayerView) ((RelativeLayout) childView).getChildAt(0);
+                            SimpleExoPlayer simpleExoPlayer = videoView.getPlayer();
+                            simpleExoPlayer.setPlayWhenReady(true);
+                        }
+                    }
+                    if (position2 != -1 && position2 != position1) {
+                        Log.d("first visible item postion", "" + position2);
+                        View view2 = (View) ((LinearLayoutManager) recyclerView.getLayoutManager()).findViewByPosition(position2);
+                        View childView = (View) ((CardView) view2).getChildAt(0);
+                        if (childView instanceof RelativeLayout) {
+                            SimpleExoPlayerView videoView = (SimpleExoPlayerView) ((RelativeLayout) childView).getChildAt(0);
+                            SimpleExoPlayer simpleExoPlayer = videoView.getPlayer();
+                            simpleExoPlayer.setPlayWhenReady(true);
+                        }
+                    }
+                }
+            }
+        });
         //Initialize activity variables
         stateString = "";
         cityString = "";
@@ -152,5 +212,31 @@ public class SearchResultsActivity extends AppCompatActivity {
             urlString = urlString + 'v';
         }
         urlList.add(urlString);
+    }
+
+    private void loadPolaroids(){
+        polaroids.clear();
+        String combinedString;
+        String uriString;
+        char uriType;
+        int size = urlList.size();
+        Log.d("urlList size", "" + size);
+
+        for(int i = 0; i < size; i++){
+            combinedString = urlList.get(i);
+            Log.d("Combined String", combinedString);
+            uriString = combinedString.substring(0, combinedString.length() - 2);
+            Log.d("uriString", uriString);
+            uriType = combinedString.charAt(combinedString.length() -1);
+            Log.d("uriType", ""+ uriType);
+            if(uriType == 'i'){
+                polaroids.add(new Polaroid(null, Uri.parse(uriString)));
+            }
+            else if(uriType == 'v'){
+                Log.d("Latest loadPolaroid()", "loading video");
+                polaroids.add(new Polaroid(Uri.parse(uriString), null));
+            }
+            rvAdapter.notifyDataSetChanged();
+        }
     }
 }
