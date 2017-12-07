@@ -27,19 +27,7 @@
             android:layout_height="wrap_content"
             android:indeterminate="true" />
     </RelativeLayout>
-
-    <ProgressBar
-        android:id="@+id/progress_bar"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:indeterminate="true" />
-    <include
-        android:id="@+id/tool_bar"
-        layout="@layout/tool_bar"
-        android:layout_alignParentStart="true"
-        android:layout_alignParentTop="true"
-        android:layout_height="match_parent"
-        android:layout_width="match_parent"/>
+    
     <android.support.v7.widget.RecyclerView
         android:id="@+id/recyclerView"
         android:layout_width="match_parent"

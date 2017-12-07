@@ -29,9 +29,6 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.Button;
-import android.widget.ImageView;
-import android.widget.MediaController;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.SearchView;
@@ -76,7 +73,6 @@ public class TrendingActivity extends AppCompatActivity{
     private ArrayList<String> urlList;
     private boolean queryFinished;
     private ProgressBar progressBar;
-    private ImageView ivImage;
 
     //Todo: There is a method at the bottom of the activity called userHasRefreshed, urlList is always updated so no need to worry about that
 
