@@ -13,7 +13,7 @@
     <string name="post_count_text">Posts</string>
     <string name="help_center">Help Center</string>
     <string name="faq">FAQ</string>
-    <string name="search_hint">City or State</string>
+    <string name="search_hint">State, City</string>
     <string name="captured_media_submit_button">Submit</string>
     <string name="edit_profile">Edit Profile</string>
     <string name="can_you_use_video_on_this_app">Can you use video on this app?</string>

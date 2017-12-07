@@ -30,6 +30,7 @@ import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.SearchView;
 import android.widget.Toast;
+
 import com.google.android.exoplayer2.SimpleExoPlayer;
 import com.google.android.exoplayer2.ui.SimpleExoPlayerView;
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -80,14 +81,14 @@ public class LatestMemoriesActivity extends AppCompatActivity {
     ValueEventListener valueEventListener = new ValueEventListener() {
         @Override
         public void onDataChange(DataSnapshot dataSnapshot) {
-            for(DataSnapshot mediaSnapshot : dataSnapshot.getChildren()) {
+            for (DataSnapshot mediaSnapshot : dataSnapshot.getChildren()) {
                 addToUrlList(mediaSnapshot);
             }
             //Data has finished loading
             queryFinished = true;
             //Todo: Call method to populate views here
             Log.d(TAG, "Query finished!");
-            if(progressBar != null) {
+            if (progressBar != null) {
                 progressBar.setVisibility(View.GONE);
                 recyclerView.setVisibility(View.VISIBLE);
             }
@@ -106,7 +107,7 @@ public class LatestMemoriesActivity extends AppCompatActivity {
         @Override
         public void onChildAdded(DataSnapshot dataSnapshot, String s) {
             //Only starts adding to the url list if the query is finished for the new ones
-            if(queryFinished) {
+            if (queryFinished) {
                 addToUrlList(dataSnapshot);
             }
         }
@@ -115,6 +116,7 @@ public class LatestMemoriesActivity extends AppCompatActivity {
         public void onChildChanged(DataSnapshot dataSnapshot, String s) {
 
         }
+
         public void onChildRemoved(DataSnapshot dataSnapshot) {
 
         }
@@ -138,7 +140,7 @@ public class LatestMemoriesActivity extends AppCompatActivity {
 
         //Initialize the progress bar to appear in the activity while the activity is in the process of querying
         progressBar = (ProgressBar) this.findViewById(R.id.latest_progress_bar);
-        if(progressBar == null){
+        if (progressBar == null) {
             Log.d(TAG, "Progress Bar is null");
         }
 
@@ -153,7 +155,7 @@ public class LatestMemoriesActivity extends AppCompatActivity {
 
         //If accessLocationPermission variable is false, cannot display anything... ask for user's permission
         Log.d(TAG, "Location permission = " + accessLocationPermission);
-        if(!accessLocationPermission) {
+        if (!accessLocationPermission) {
             requestPermission();
         } else {
             //Application has permission to use the user's location, initialize the query
@@ -187,13 +189,12 @@ public class LatestMemoriesActivity extends AppCompatActivity {
                             SimpleExoPlayerView videoView = (SimpleExoPlayerView) ((RelativeLayout) childView).getChildAt(0);
                             SimpleExoPlayer simpleExoPlayer = videoView.getPlayer();
                             simpleExoPlayer.setPlayWhenReady(true);
-                            if(currentlyPlayingVideo != null && currentlyPlayingVideo != videoView){
+                            if (currentlyPlayingVideo != null && currentlyPlayingVideo != videoView) {
                                 SimpleExoPlayer playerToPause = currentlyPlayingVideo.getPlayer();
                                 playerToPause.setPlayWhenReady(false);
                             }
                             currentlyPlayingVideo = videoView;
-                        }
-                        else if(currentlyPlayingVideo != null){
+                        } else if (currentlyPlayingVideo != null) {
                             SimpleExoPlayer playerToPause = currentlyPlayingVideo.getPlayer();
                             playerToPause.setPlayWhenReady(false);
                         }
@@ -227,6 +228,48 @@ public class LatestMemoriesActivity extends AppCompatActivity {
         searchView.setQueryHint(getResources().getString(R.string.search_hint));
 
         searchView.setSearchableInfo(searchManager.getSearchableInfo(getComponentName()));
+        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                if (!query.isEmpty()) {
+                    //Check if the query has a valid format with State, City
+                    if(!query.contains(",")) {
+                        Toast.makeText(LatestMemoriesActivity.this, "Invalid format", Toast.LENGTH_SHORT).show();
+                        return true;
+                    }
+                    String[] splitQuery = query.split(",");
+                    String stateString = splitQuery[0].trim();
+                    char[] stateCharArray = stateString.toCharArray();
+                    //Immediately returns from the method if a bad character is found
+                    for(char character : stateCharArray) {
+                        int charValue = (int) character;
+                        if(charValue < 65 || (charValue > 90 && charValue < 97) || charValue > 122) {
+                            Toast.makeText(LatestMemoriesActivity.this, "Invalid character", Toast.LENGTH_SHORT).show();
+                            return true;
+                        }
+                    }
+                    String cityString = splitQuery[1].trim();
+                    char[] cityCharArray = cityString.toCharArray();
+                    for(char character : cityCharArray) {
+                        int charValue = (int) character;
+                        if(charValue < 65 || (charValue > 90 && charValue < 97) || charValue > 122) {
+                            Toast.makeText(LatestMemoriesActivity.this, "Invalid character", Toast.LENGTH_SHORT).show();
+                            return true;
+                        }
+                    }
+                    Intent intent = new Intent(LatestMemoriesActivity.this, SearchResultsActivity.class);
+                    intent.putExtra("state", stateString);
+                    intent.putExtra("city", cityString);
+                    startActivity(intent);
+                }
+                return true;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                return false;
+            }
+        });
         return true;
     }
 
@@ -240,7 +283,7 @@ public class LatestMemoriesActivity extends AppCompatActivity {
                 return true;
             }
             case R.id.action_cam: {
-                if(accessLocationPermission) {
+                if (accessLocationPermission) {
                     dispatchTakePictureIntent();
                     return true;
                 } else {
@@ -253,8 +296,8 @@ public class LatestMemoriesActivity extends AppCompatActivity {
     }
 
     //Asks for the user's permission, double check just in case, don't want to ask the user a second time
-    private void requestPermission(){
-        if(ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) !=
+    private void requestPermission() {
+        if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) !=
                 PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION},
                     PERMISSION_REQUEST_CODE);
@@ -265,12 +308,12 @@ public class LatestMemoriesActivity extends AppCompatActivity {
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        switch(requestCode) {
+        switch (requestCode) {
             case PERMISSION_REQUEST_CODE: {
-                if(grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     //Permission has been granted
                     accessLocationPermission = true;
-                    if(cameraRequest) {
+                    if (cameraRequest) {
                         dispatchTakePictureIntent();
                         cameraRequest = false;
                     }
@@ -325,7 +368,6 @@ public class LatestMemoriesActivity extends AppCompatActivity {
     }
 
 
-
     public void setTransitions() {
         Slide enterSlide = new Slide();
         Slide exitSlide = new Slide();
@@ -339,7 +381,7 @@ public class LatestMemoriesActivity extends AppCompatActivity {
         getWindow().setReturnTransition(enterSlide);
     }
 
-    private void loadPolaroids(){
+    private void loadPolaroids() {
         polaroids.clear();
         String combinedString;
         String uriString;
@@ -347,17 +389,16 @@ public class LatestMemoriesActivity extends AppCompatActivity {
         int size = urlList.size();
         Log.d("urlList size", "" + size);
 
-        for(int i = 0; i < size; i++){
+        for (int i = 0; i < size; i++) {
             combinedString = urlList.get(i);
             Log.d("Combined String", combinedString);
             uriString = combinedString.substring(0, combinedString.length() - 2);
             Log.d("uriString", uriString);
-            uriType = combinedString.charAt(combinedString.length() -1);
-            Log.d("uriType", ""+ uriType);
-            if(uriType == 'i'){
+            uriType = combinedString.charAt(combinedString.length() - 1);
+            Log.d("uriType", "" + uriType);
+            if (uriType == 'i') {
                 polaroids.add(new Polaroid(null, Uri.parse(uriString)));
-            }
-            else if(uriType == 'v'){
+            } else if (uriType == 'v') {
                 Log.d("Latest loadPolaroid()", "loading video");
                 polaroids.add(new Polaroid(Uri.parse(uriString), null));
             }
@@ -366,9 +407,9 @@ public class LatestMemoriesActivity extends AppCompatActivity {
     }
 
     @Override
-    public void onPause(){
+    public void onPause() {
         super.onPause();
-        if(currentlyPlayingVideo != null){
+        if (currentlyPlayingVideo != null) {
             SimpleExoPlayer playerToPause = currentlyPlayingVideo.getPlayer();
             playerToPause.setPlayWhenReady(false);
         }
@@ -396,8 +437,7 @@ public class LatestMemoriesActivity extends AppCompatActivity {
                         } catch (IOException exception) {
                             exception.printStackTrace();
                         }
-                    }
-                    else {
+                    } else {
                         double longitude = -122.084;
                         double latitude = 37.422;
                         Geocoder geocoder = new Geocoder(LatestMemoriesActivity.this, Locale.getDefault());
@@ -464,7 +504,7 @@ public class LatestMemoriesActivity extends AppCompatActivity {
         String prevCity = city;
         //Get user location but do not re-initialize the query
         getUserLocationAndInitializeQuery(false);
-        if(!prevCity.equals(city)) {
+        if (!prevCity.equals(city)) {
             //User has moved, but don't need to do any additional coding
             initializeQuery();
         }
