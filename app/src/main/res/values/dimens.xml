@@ -1,4 +1,5 @@
 <resources>
     <dimen name="fab_margin">16dp</dimen>
     <dimen name="toolBarMargin">20dp</dimen>
+    <dimen name="grid_image_size">125dp</dimen>
 </resources>

@@ -27,8 +27,6 @@ public class Setting extends Activity{
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.tool_bar);
-        setSupportActionBar(toolbar);
         Button b2 = (Button) findViewById(R.id.button2);
         Button b1 = (Button) findViewById(R.id.button1);
         b2.setOnClickListener((View.OnClickListener) this);

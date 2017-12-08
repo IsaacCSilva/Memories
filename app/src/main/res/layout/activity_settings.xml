@@ -14,14 +14,6 @@
     android:id="@+id/button1"
     android:text="@string/edit_profile"/>
 
-    <include
-        android:id="@+id/tool_bar"
-        layout="@layout/tool_bar"
-        android:layout_alignParentStart="true"
-        android:layout_alignParentTop="true"
-        android:layout_height="match_parent"
-        android:layout_width="match_parent"/>
-
     <Button
         android:id="@+id/button2"
         android:layout_width="350dp"

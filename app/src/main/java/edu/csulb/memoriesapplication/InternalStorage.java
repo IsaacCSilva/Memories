@@ -17,8 +17,6 @@ import java.io.IOException;
 
 public class InternalStorage {
     private static final String USER_IMAGES_FOLDER = "user_images";
-    private static final String TEMP_IMAGES_FOLDER = "temp_images";
-    private static final String TEMP_IMAGE_NAME = "tempImage";
     private static final String IND_USER_PROFILE_PIC = "profile_pic_";
     private static final String IND_USER_BACKGROUND_PIC = "background_pic_";
     private static final String IMAGE_EXTENSION = ".png";
@@ -56,7 +54,6 @@ public class InternalStorage {
             Bitmap userProfilePicture = BitmapFactory.decodeFile(userImage.getAbsolutePath());
             return userProfilePicture;
         }
-
         return null;
     }
 
