@@ -15,6 +15,7 @@ import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.FileProvider;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.LinearLayoutManager;
@@ -26,6 +27,7 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.SearchView;
@@ -74,8 +76,9 @@ public class LatestMemoriesActivity extends AppCompatActivity {
     private boolean queryFinished;
     private ProgressBar progressBar;
     private Query urlQuery;
-
-    //TODO: there's a method below called userHasRefreshed.. just load again from the new urlList
+    private SwipeRefreshLayout swipeRefreshLayout;
+    private boolean userHasRefreshedAnimation;
+    private SearchView searchView;
 
     //Value event listener which is first called with the initial query
     ValueEventListener valueEventListener = new ValueEventListener() {
@@ -86,12 +89,8 @@ public class LatestMemoriesActivity extends AppCompatActivity {
             }
             //Data has finished loading
             queryFinished = true;
-            //Todo: Call method to populate views here
-            Log.d(TAG, "Query finished!");
-            if (progressBar != null) {
-                progressBar.setVisibility(View.GONE);
-                recyclerView.setVisibility(View.VISIBLE);
-            }
+            progressBar.setVisibility(View.GONE);
+            recyclerView.setVisibility(View.VISIBLE);
             loadPolaroids();
         }
 
@@ -132,11 +131,25 @@ public class LatestMemoriesActivity extends AppCompatActivity {
         }
     };
 
+    SwipeRefreshLayout.OnRefreshListener onRefreshListener = new SwipeRefreshLayout.OnRefreshListener() {
+        @Override
+        public void onRefresh() {
+            userHasRefreshedAnimation = true;
+            userHasRefreshed();
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_latest);
+
+        //Initialize the swipe refresh layout
+        swipeRefreshLayout = (SwipeRefreshLayout) this.findViewById(R.id.latestSwipeLayout);
+        swipeRefreshLayout.setOnRefreshListener(onRefreshListener);
+
+        //Initialize the refresh boolean to that the user hasn't refreshed yet
+        userHasRefreshedAnimation = false;
 
         //Initialize the progress bar to appear in the activity while the activity is in the process of querying
         progressBar = (ProgressBar) this.findViewById(R.id.latest_progress_bar);
@@ -216,13 +229,46 @@ public class LatestMemoriesActivity extends AppCompatActivity {
     }
 
     @Override
+    public void onRestart() {
+        super.onRestart();
+        this.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN);
+        searchView.setQuery("", false);
+        searchView.clearFocus();
+        searchView.setIconified(true);
+        if (urlQuery != null) {
+            /*
+            Attach a listener so that if any more media links are added to the database,
+            they will be added to the top of the array list stack*/
+            urlQuery.addChildEventListener(childEventListener);
+            //Add listener so that we know the update finished
+            urlQuery.addListenerForSingleValueEvent(valueEventListener);
+        }
+        if (accessLocationPermission) {
+            getUserLocationAndInitializeQuery(true);
+        }
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        //Remove the listeners
+        urlQuery.removeEventListener(valueEventListener);
+        urlQuery.removeEventListener(childEventListener);
+    }
+
+    @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.user_menu, menu);
 
         // Associate searchable configuration with the SearchView
         SearchManager searchManager = (SearchManager) getSystemService(Context.SEARCH_SERVICE);
-        SearchView searchView = (SearchView) menu.findItem(R.id.action_search).getActionView();
+        searchView = (SearchView) menu.findItem(R.id.action_search).getActionView();
 
         // Override search hint
         searchView.setQueryHint(getResources().getString(R.string.search_hint));
@@ -233,7 +279,7 @@ public class LatestMemoriesActivity extends AppCompatActivity {
             public boolean onQueryTextSubmit(String query) {
                 if (!query.isEmpty()) {
                     //Check if the query has a valid format with State, City
-                    if(!query.contains(",")) {
+                    if (!query.contains(",")) {
                         Toast.makeText(LatestMemoriesActivity.this, "Invalid format", Toast.LENGTH_SHORT).show();
                         return true;
                     }
@@ -241,18 +287,18 @@ public class LatestMemoriesActivity extends AppCompatActivity {
                     String stateString = splitQuery[0].trim();
                     char[] stateCharArray = stateString.toCharArray();
                     //Immediately returns from the method if a bad character is found
-                    for(char character : stateCharArray) {
+                    for (char character : stateCharArray) {
                         int charValue = (int) character;
-                        if(charValue < 65 || (charValue > 90 && charValue < 97) || charValue > 122) {
+                        if (charValue < 65 || (charValue > 90 && charValue < 97) || charValue > 122) {
                             Toast.makeText(LatestMemoriesActivity.this, "Invalid character", Toast.LENGTH_SHORT).show();
                             return true;
                         }
                     }
                     String cityString = splitQuery[1].trim();
                     char[] cityCharArray = cityString.toCharArray();
-                    for(char character : cityCharArray) {
+                    for (char character : cityCharArray) {
                         int charValue = (int) character;
-                        if(charValue < 65 || (charValue > 90 && charValue < 97) || charValue > 122) {
+                        if (charValue < 65 || (charValue > 90 && charValue < 97) || charValue > 122) {
                             Toast.makeText(LatestMemoriesActivity.this, "Invalid character", Toast.LENGTH_SHORT).show();
                             return true;
                         }
@@ -316,6 +362,8 @@ public class LatestMemoriesActivity extends AppCompatActivity {
                     if (cameraRequest) {
                         dispatchTakePictureIntent();
                         cameraRequest = false;
+                    } else {
+                        getUserLocationAndInitializeQuery(true);
                     }
                 } else {
                     //Permission Denied
@@ -404,6 +452,12 @@ public class LatestMemoriesActivity extends AppCompatActivity {
             }
             rvAdapter.notifyDataSetChanged();
         }
+
+        //If this was called when the user refreshed the application, end the animation here
+        if (userHasRefreshedAnimation) {
+            swipeRefreshLayout.setRefreshing(false);
+            userHasRefreshedAnimation = false;
+        }
     }
 
     @Override
@@ -474,7 +528,7 @@ public class LatestMemoriesActivity extends AppCompatActivity {
         } else if (mediaType.charAt(0) == 'v') {
             urlString = urlString + 'v';
         }
-        urlList.add(urlString);
+        urlList.add(0, urlString);
     }
 
     //Retrieves a list of url links and returns null for an empty list
@@ -491,7 +545,7 @@ public class LatestMemoriesActivity extends AppCompatActivity {
         urlQuery = databaseReference.orderByChild(GlobalDatabase.CITY_KEY).equalTo(city).limitToLast(maxQuerryCount);
         Log.d(TAG, "Current City: " + city);
         //Add listener so that we know the update finished
-        urlQuery.addValueEventListener(valueEventListener);
+        urlQuery.addListenerForSingleValueEvent(valueEventListener);
         /*
         Attach a listener so that if any more media links are added to the database,
         they will be added to the top of the array list stack*/
@@ -501,15 +555,9 @@ public class LatestMemoriesActivity extends AppCompatActivity {
     }
 
     private void userHasRefreshed() {
-        String prevCity = city;
-        //Get user location but do not re-initialize the query
-        getUserLocationAndInitializeQuery(false);
-        if (!prevCity.equals(city)) {
-            //User has moved, but don't need to do any additional coding
-            initializeQuery();
-        }
-        //Todo: refresh the page with the same urlList
+        getUserLocationAndInitializeQuery(true);
         recyclerView.scrollToPosition(0);
+        loadPolaroids();
     }
 
 }

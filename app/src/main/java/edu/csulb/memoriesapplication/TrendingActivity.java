@@ -1,7 +1,5 @@
 package edu.csulb.memoriesapplication;
 
-import android.*;
-import android.Manifest;
 import android.app.SearchManager;
 import android.content.Context;
 import android.content.Intent;
@@ -9,7 +7,6 @@ import android.content.pm.PackageManager;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
-import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -18,6 +15,7 @@ import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.FileProvider;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.LinearLayoutManager;
@@ -29,10 +27,12 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.SearchView;
 import android.widget.Toast;
+
 import com.google.android.exoplayer2.SimpleExoPlayer;
 import com.google.android.exoplayer2.ui.SimpleExoPlayerView;
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -44,9 +44,11 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 
@@ -54,7 +56,7 @@ import java.util.Locale;
  * Created by Danie on 10/16/2017.
  */
 
-public class TrendingActivity extends AppCompatActivity{
+public class TrendingActivity extends AppCompatActivity {
 
     //added
     private LinearLayoutManager linearLayoutManager;
@@ -70,11 +72,13 @@ public class TrendingActivity extends AppCompatActivity{
     private String TAG = "TrendingActivity";
     private String city;
     private String state;
-    private ArrayList<String> urlList;
+    private ArrayList<FirebaseMedia> urlList;
     private boolean queryFinished;
     private ProgressBar progressBar;
-
-    //Todo: There is a method at the bottom of the activity called userHasRefreshed, urlList is always updated so no need to worry about that
+    private Query urlQuery;
+    private SwipeRefreshLayout swipeRefreshLayout;
+    private boolean userHasRefreshedAnimation;
+    private SearchView searchView;
 
     //Value event listener for the query
     ValueEventListener valueEventListener = new ValueEventListener() {
@@ -85,9 +89,9 @@ public class TrendingActivity extends AppCompatActivity{
             for (DataSnapshot mediaSnapshot : dataSnapshot.getChildren()) {
                 addToUrlList(mediaSnapshot);
             }
+            //Sort the url list based on the likes they received
+            Collections.sort(urlList);
             //Data has finished loading
-            queryFinished = true;
-            //Todo: Call method to populate the views here
             progressBar.setVisibility(View.GONE);
             recyclerView.setVisibility(View.VISIBLE);
             loadPolaroids();
@@ -105,7 +109,7 @@ public class TrendingActivity extends AppCompatActivity{
         @Override
         public void onChildAdded(DataSnapshot dataSnapshot, String s) {
             //Only starts adding to the url list if the query is finished for the new ones
-            if(queryFinished) {
+            if (queryFinished) {
                 addToUrlList(dataSnapshot);
             }
         }
@@ -131,11 +135,29 @@ public class TrendingActivity extends AppCompatActivity{
         }
     };
 
+    SwipeRefreshLayout.OnRefreshListener onRefreshListener = new SwipeRefreshLayout.OnRefreshListener() {
+        @Override
+        public void onRefresh() {
+            userHasRefreshedAnimation = true;
+            userHasRefreshed();
+        }
+    };
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_trending);
+
+        //Initialize the swipe refresh layout
+        swipeRefreshLayout = (SwipeRefreshLayout) this.findViewById(R.id.trendingSwipeLayout);
+        swipeRefreshLayout.setOnRefreshListener(onRefreshListener);
+
+        //Initialize the refresh boolean to that the user hasn't refreshed yet
+        userHasRefreshedAnimation = false;
+
+        //Set urlQuery to null
+        urlQuery = null;
 
         //Initialize progress bar
         progressBar = (ProgressBar) this.findViewById(R.id.trending_progress_bar);
@@ -209,20 +231,93 @@ public class TrendingActivity extends AppCompatActivity{
     }
 
     @Override
+    public void onRestart() {
+        super.onRestart();
+        this.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN);
+        searchView.setQuery("", false);
+        searchView.clearFocus();
+        searchView.setIconified(true);
+        if (urlQuery != null) {
+            /*
+            Attach a listener so that if any more media links are added to the database,
+            they will be added to the top of the array list stack*/
+            urlQuery.addChildEventListener(childEventListener);
+            //Add listener so that we know the update finished
+            urlQuery.addListenerForSingleValueEvent(valueEventListener);
+        }
+        if (accessLocationPermission) {
+            getUserLocationAndInitializeQuery(true);
+        }
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        //Remove the listeners
+        urlQuery.removeEventListener(valueEventListener);
+        urlQuery.removeEventListener(childEventListener);
+    }
+
+    @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.user_menu, menu);
 
-
         // Associate searchable configuration with the SearchView
         SearchManager searchManager = (SearchManager) getSystemService(Context.SEARCH_SERVICE);
-        SearchView searchView = (SearchView) menu.findItem(R.id.action_search).getActionView();
+        searchView = (SearchView) menu.findItem(R.id.action_search).getActionView();
 
         // Override search hint
         searchView.setQueryHint(getResources().getString(R.string.search_hint));
 
         searchView.setSearchableInfo(searchManager.getSearchableInfo(getComponentName()));
+        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                if (!query.isEmpty()) {
+                    //Check if the query has a valid format with State, City
+                    if(!query.contains(",")) {
+                        Toast.makeText(TrendingActivity.this, "Invalid format", Toast.LENGTH_SHORT).show();
+                        return true;
+                    }
+                    String[] splitQuery = query.split(",");
+                    String stateString = splitQuery[0].trim();
+                    char[] stateCharArray = stateString.toCharArray();
+                    //Immediately returns from the method if a bad character is found
+                    for(char character : stateCharArray) {
+                        int charValue = (int) character;
+                        if(charValue < 65 || (charValue > 90 && charValue < 97) || charValue > 122) {
+                            Toast.makeText(TrendingActivity.this, "Invalid character", Toast.LENGTH_SHORT).show();
+                            return true;
+                        }
+                    }
+                    String cityString = splitQuery[1].trim();
+                    char[] cityCharArray = cityString.toCharArray();
+                    for(char character : cityCharArray) {
+                        int charValue = (int) character;
+                        if(charValue < 65 || (charValue > 90 && charValue < 97) || charValue > 122) {
+                            Toast.makeText(TrendingActivity.this, "Invalid character", Toast.LENGTH_SHORT).show();
+                            return true;
+                        }
+                    }
+                    Intent intent = new Intent(TrendingActivity.this, SearchResultsActivity.class);
+                    intent.putExtra("state", stateString);
+                    intent.putExtra("city", cityString);
+                    startActivity(intent);
+                }
+                return true;
+            }
 
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                return false;
+            }
+        });
         return true;
     }
 
@@ -269,6 +364,8 @@ public class TrendingActivity extends AppCompatActivity{
                     if (cameraRequest) {
                         dispatchTakePictureIntent();
                         cameraRequest = false;
+                    } else {
+                        getUserLocationAndInitializeQuery(true);
                     }
                 } else {
                     //Permission Denied
@@ -382,12 +479,14 @@ public class TrendingActivity extends AppCompatActivity{
     private void addToUrlList(DataSnapshot mediaSnapshot) {
         String urlString = (String) mediaSnapshot.child(GlobalDatabase.URL_KEY).getValue();
         String mediaType = (String) mediaSnapshot.child(GlobalDatabase.MEDIA_TYPE_KEY).getValue();
+        Long likesCount = (Long) mediaSnapshot.child(GlobalDatabase.LIKES_COUNT_KEY).getValue();
+        FirebaseMedia firebaseMedia = new FirebaseMedia(urlString, likesCount.longValue());
         if (mediaType.charAt(0) == 'i') {
-            urlString = urlString + 'i';
+            firebaseMedia.attachMediaType('i');
         } else if (mediaType.charAt(0) == 'v') {
-            urlString = urlString + 'v';
+            firebaseMedia.attachMediaType('v');
         }
-        urlList.add(urlString);
+        urlList.add(firebaseMedia);
     }
 
     //Retrieves a list of url links and returns null for an empty list
@@ -401,23 +500,24 @@ public class TrendingActivity extends AppCompatActivity{
         //Maximum amount of querries
         final int maxQuerryCount = 700;
         //Initialize the query
-        Query urlQuery = databaseReference.equalTo(city, GlobalDatabase.CITY_KEY)
-                .limitToLast(maxQuerryCount).orderByChild(GlobalDatabase.LIKES_COUNT_KEY);
+        urlQuery = databaseReference.orderByChild(GlobalDatabase.CITY_KEY).equalTo(city).limitToLast(maxQuerryCount);
+        //Add listener so that we know the update finished
+        urlQuery.addListenerForSingleValueEvent(valueEventListener);
         /*
         Attach a listener so that if any more media links are added to the database,
         they will be added to the top of the array list stack*/
         urlQuery.addChildEventListener(childEventListener);
-        //Add listener so that we know the update finished
-        urlQuery.addValueEventListener(valueEventListener);
         //Initialize the ArrayList to hold the url strings
         urlList = new ArrayList<>();
     }
 
     private void userHasRefreshed() {
-
+        getUserLocationAndInitializeQuery(true);
+        recyclerView.scrollToPosition(0);
+        loadPolaroids();
     }
 
-    private void loadPolaroids(){
+    private void loadPolaroids() {
         polaroids.clear();
         String combinedString;
         String uriString;
@@ -425,22 +525,26 @@ public class TrendingActivity extends AppCompatActivity{
         int size = urlList.size();
         Log.d("urlList size", "" + size);
 
-        for(int i = 0; i < size; i++){
-            combinedString = urlList.get(i);
+        for (int i = 0; i < size; i++) {
+            combinedString = urlList.get(i).getUrl();
             Log.d("Combined String", combinedString);
             uriString = combinedString.substring(0, combinedString.length() - 2);
             Log.d("uriString", uriString);
-            uriType = combinedString.charAt(combinedString.length() -1);
-            Log.d("uriType", ""+ uriType);
-            if(uriType == 'i'){
+            uriType = combinedString.charAt(combinedString.length() - 1);
+            Log.d("uriType", "" + uriType);
+            if (uriType == 'i') {
                 polaroids.add(new Polaroid(null, Uri.parse(uriString)));
-            }
-            else if(uriType == 'v'){
+            } else if (uriType == 'v') {
                 Log.d("Latest loadPolaroid()", "loading video");
                 polaroids.add(new Polaroid(Uri.parse(uriString), null));
             }
             rvAdapter.notifyDataSetChanged();
         }
-    }
 
+        //If this was called when the user refreshed the application, end the animation here
+        if(userHasRefreshedAnimation) {
+            swipeRefreshLayout.setRefreshing(false);
+            userHasRefreshedAnimation = false;
+        }
+    }
 }

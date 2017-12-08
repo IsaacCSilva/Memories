@@ -1,10 +1,8 @@
 package edu.csulb.memoriesapplication;
 
-import android.app.SearchManager;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.renderscript.Sampler;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.LinearLayoutManager;
@@ -13,11 +11,8 @@ import android.util.Log;
 import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
-import android.widget.TextView;
-
 import com.google.android.exoplayer2.SimpleExoPlayer;
 import com.google.android.exoplayer2.ui.SimpleExoPlayerView;
-import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -31,16 +26,14 @@ public class SearchResultsActivity extends AppCompatActivity {
 
     private String stateString;
     private String cityString;
-    private boolean queryFinished;
     private ArrayList<String> urlList;
     private final String TAG = "SearchResultsActivity";
     private ProgressBar progressBar;
-
     private LinearLayoutManager linearLayoutManager;
     private RecyclerView recyclerView;
     private ArrayList<Polaroid> polaroids;
     private CardViewAdapter rvAdapter;
-    private MyConstraintLayout constraintLayout;
+    private Query urlQuery;
 
     private ValueEventListener valueEventListener = new ValueEventListener() {
         @Override
@@ -49,42 +42,9 @@ public class SearchResultsActivity extends AppCompatActivity {
                 addToUrlList(mediaSnapshot);
             }
             //Data has finished loading
-            queryFinished = true;
-            //Todo: Call method to populate the views here
             progressBar.setVisibility(View.GONE);
             recyclerView.setVisibility(View.VISIBLE);
             loadPolaroids();
-        }
-
-        @Override
-        public void onCancelled(DatabaseError databaseError) {
-
-        }
-    };
-
-    private ChildEventListener childEventListener = new ChildEventListener() {
-        //A new item has been added to the database
-        @Override
-        public void onChildAdded(DataSnapshot dataSnapshot, String s) {
-            //Only starts adding to the url list if the query is finished for the new ones
-            if (queryFinished) {
-                addToUrlList(dataSnapshot);
-            }
-        }
-
-        @Override
-        public void onChildChanged(DataSnapshot dataSnapshot, String s) {
-
-        }
-
-        @Override
-        public void onChildRemoved(DataSnapshot dataSnapshot) {
-
-        }
-
-        @Override
-        public void onChildMoved(DataSnapshot dataSnapshot, String s) {
-
         }
 
         @Override
@@ -98,15 +58,13 @@ public class SearchResultsActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_search_results);
 
+        //Set urlQuery to null since it hasn't started
+        urlQuery = null;
+
         //Initialize the progress bar
         progressBar = (ProgressBar) this.findViewById(R.id.search_progress_bar);
 
         //instantiate objects
-        constraintLayout = (MyConstraintLayout) findViewById(R.id.constraintLayout);
-        Intent startLeftNeighborActivity = new Intent(this, UserPageActivity.class).addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-        constraintLayout.setLeftPage(startLeftNeighborActivity);
-        Intent startRightNeighborActivity = new Intent(this, LatestMemoriesActivity.class).addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-        constraintLayout.setRightPage(startRightNeighborActivity);
         polaroids = new ArrayList<Polaroid>();
         rvAdapter = new CardViewAdapter(this, polaroids);
         recyclerView = (RecyclerView) findViewById(R.id.search_recyclerView);
@@ -143,10 +101,29 @@ public class SearchResultsActivity extends AppCompatActivity {
                 }
             }
         });
+
+        recyclerView.setVisibility(View.GONE);
         //Initialize activity variables
         stateString = "";
         cityString = "";
         handleIntent(getIntent());
+
+        //Initialize the query
+        initializeQuery();
+    }
+
+    @Override
+    public void onStart(){
+        super.onStart();
+        if(urlQuery != null) {
+            urlQuery.addListenerForSingleValueEvent(valueEventListener);
+        }
+    }
+
+    @Override
+    public void onStop(){
+        super.onStop();
+        urlQuery.removeEventListener(valueEventListener);
     }
 
     @Override
@@ -182,22 +159,15 @@ public class SearchResultsActivity extends AppCompatActivity {
 
     private void initializeQuery() {
         //Initialize the progress bar to appear in the activity while the activity is in the process of querying
-
-        //Query just started, initialize the query to change behavior of child listener
-        queryFinished = false;
+        progressBar.setVisibility(View.VISIBLE);
         //Creates a reference for the location where every media link is stored ordered by time
         DatabaseReference databaseReference = GlobalDatabase.getMediaListReference(stateString);
         //Maximum amount of querries
         final int maxQuerryCount = 700;
         //Initialize the query
-        Query urlQuery = databaseReference.equalTo(cityString, GlobalDatabase.CITY_KEY)
-                .limitToLast(maxQuerryCount).orderByChild(GlobalDatabase.LIKES_COUNT_KEY);
-        /*
-        Attach a listener so that if any more media links are added to the database,
-        they will be added to the top of the array list stack*/
-        urlQuery.addChildEventListener(childEventListener);
+        urlQuery = databaseReference.orderByChild(GlobalDatabase.CITY_KEY).equalTo(cityString).limitToLast(maxQuerryCount);
         //Add listener so that we know the update finished
-        urlQuery.addValueEventListener(valueEventListener);
+        urlQuery.addListenerForSingleValueEvent(valueEventListener);
         //Initialize the ArrayList to hold the url strings
         urlList = new ArrayList<>();
     }
@@ -211,7 +181,7 @@ public class SearchResultsActivity extends AppCompatActivity {
         } else if (mediaType.charAt(0) == 'v') {
             urlString = urlString + 'v';
         }
-        urlList.add(urlString);
+        urlList.add(0, urlString);
     }
 
     private void loadPolaroids(){

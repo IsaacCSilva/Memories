@@ -22,6 +22,7 @@ import android.transition.Slide;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
+import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.GridView;
@@ -74,6 +75,35 @@ public class UserPageActivity extends Activity implements View.OnClickListener {
     private MyCoordinatorLayout coordinatorLayout;
     private GridView gridView;
     private ImageAdapter imageAdapter;
+    private Query urlQuery;
+
+    private ValueEventListener valueEventListener = new ValueEventListener() {
+        @Override
+        public void onDataChange(DataSnapshot dataSnapshot) {
+            ArrayDeque<String> urlList = new ArrayDeque<>();
+            //Get the list
+            String urlString = "";
+            String mediaType = "";
+            for (DataSnapshot mediaSnapshot : dataSnapshot.getChildren()) {
+                mediaType = (String) mediaSnapshot.child(UserDatabase.USER_MEDIA_TYPE_KEY).getValue();
+                urlString = (String) mediaSnapshot.child(UserDatabase.USER_URL_KEY).getValue();
+                if (mediaType.charAt(0) == 'i') {
+                    urlString = urlString + 'i';
+                } else if (mediaType.charAt(0) == 'v') {
+                    urlString = urlString + 'v';
+                    urlString = urlString + 'v';
+                }
+                urlList.addFirst(urlString);
+            }
+            loadGrid(urlList);
+            //TODO; Daniel needs to add the progress bar to the grid layout and make it dissapear everything is loaded
+        }
+
+        @Override
+        public void onCancelled(DatabaseError databaseError) {
+
+        }
+    };
 
     @Override
     protected void onCreate(Bundle onSavedInstanceState) {
@@ -128,7 +158,7 @@ public class UserPageActivity extends Activity implements View.OnClickListener {
 
         //Check if user profile image exists in internal storage, if so, set it as the profile image
         Bitmap userProfilePic = InternalStorage.getProfilePic(this, userId);
-        if(userProfilePic != null) {
+        if (userProfilePic != null) {
             userProfileImageView.setImageBitmap(userProfilePic);
             userProfileImageLoaded = true;
         } else {
@@ -142,7 +172,7 @@ public class UserPageActivity extends Activity implements View.OnClickListener {
                 @Override
                 public void onReceive(Context context, Intent intent) {
                     //Check if we were able to find a profile image
-                    if(intent.getBooleanExtra(BroadcastKey.RECEIVED_IMAGE, false)){
+                    if (intent.getBooleanExtra(BroadcastKey.RECEIVED_IMAGE, false)) {
                         //Image has been received from the database
                         Bitmap userProfilePic = InternalStorage.getProfilePic(UserPageActivity.this, userId);
                         userProfileImageView.setImageBitmap(userProfilePic);
@@ -160,7 +190,7 @@ public class UserPageActivity extends Activity implements View.OnClickListener {
 
         //Check if user background image exists, if so, set it as the background image
         Bitmap userBackgroundPic = InternalStorage.getBackgroundPic(this, userId);
-        if(userBackgroundPic != null) {
+        if (userBackgroundPic != null) {
             backgroundImageView.setImageBitmap(userBackgroundPic);
             userBackgroundImageLoaded = true;
         } else {
@@ -173,13 +203,13 @@ public class UserPageActivity extends Activity implements View.OnClickListener {
             LocalBroadcastManager.getInstance(this).registerReceiver(new BroadcastReceiver() {
                 @Override
                 public void onReceive(Context context, Intent intent) {
-                    if(intent.getBooleanExtra(BroadcastKey.RECEIVED_IMAGE, false)){
+                    if (intent.getBooleanExtra(BroadcastKey.RECEIVED_IMAGE, false)) {
                         //Image has been received from the database
                         Bitmap userBackgroundPic = InternalStorage.getBackgroundPic(UserPageActivity.this, userId);
                         backgroundImageView.setImageBitmap(userBackgroundPic);
                         userBackgroundImageLoaded = true;
                         makeViewsVisible();
-                    }else {
+                    } else {
                         //Image does not exist in both the internal storage nor the database
                         //Use default values
                         userBackgroundImageLoaded = true;
@@ -202,6 +232,11 @@ public class UserPageActivity extends Activity implements View.OnClickListener {
             }
         }, intentFilter);
 
+        //Soft input mode
+        getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
+
+        //Load in the user's images
+        getUserImagesUrl();
     }
 
     @Override
@@ -209,6 +244,8 @@ public class UserPageActivity extends Activity implements View.OnClickListener {
         super.onStart();
         //Call to refresh the user's primitive data everytime this activity is revisited
         refreshUserInfo();
+        //Adds a value listener to the query to notify the application when it is done
+        urlQuery.addListenerForSingleValueEvent(valueEventListener);
     }
 
     @Override
@@ -216,6 +253,8 @@ public class UserPageActivity extends Activity implements View.OnClickListener {
         super.onStop();
         //Set that the user's primitive data is no longer valid and to refresh
         userPrimitiveDataLoaded = false;
+        urlQuery.removeEventListener(valueEventListener);
+
     }
 
     private void loadUser(User user) {
@@ -243,14 +282,14 @@ public class UserPageActivity extends Activity implements View.OnClickListener {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         switch (requestCode) {
             case REQUEST_CODE: {
-                    if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                        //Permission has been granted
-                        readPermissionGranted = true;
-                        Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-                        startActivityForResult(intent, activityToStart);
-                    } else {
-                        Toast.makeText(this, "Read Permission Denied", Toast.LENGTH_SHORT).show();
-                    }
+                if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    //Permission has been granted
+                    readPermissionGranted = true;
+                    Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+                    startActivityForResult(intent, activityToStart);
+                } else {
+                    Toast.makeText(this, "Read Permission Denied", Toast.LENGTH_SHORT).show();
+                }
             }
         }
     }
@@ -259,22 +298,30 @@ public class UserPageActivity extends Activity implements View.OnClickListener {
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.user_profile_picture: {
-                if (!readPermissionGranted) {
-                    activityToStart = RESULT_LOAD_PROFILE_PIC;
-                    requestPermissions();
+                if (!userEditingProfileIntro) {
+                    if (!readPermissionGranted) {
+                        activityToStart = RESULT_LOAD_PROFILE_PIC;
+                        requestPermissions();
+                    } else {
+                        Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+                        startActivityForResult(intent, RESULT_LOAD_PROFILE_PIC);
+                    }
                 } else {
-                    Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-                    startActivityForResult(intent, RESULT_LOAD_PROFILE_PIC);
+                    hideSoftKeyboard();
                 }
             }
             break;
             case R.id.background_image: {
-                if(!readPermissionGranted) {
-                    activityToStart = RESULT_LOAD_BACKGROUND_PIC;
-                    requestPermissions();
+                if (!userEditingProfileIntro) {
+                    if (!readPermissionGranted) {
+                        activityToStart = RESULT_LOAD_BACKGROUND_PIC;
+                        requestPermissions();
+                    } else {
+                        Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+                        startActivityForResult(intent, RESULT_LOAD_BACKGROUND_PIC);
+                    }
                 } else {
-                    Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-                    startActivityForResult(intent, RESULT_LOAD_BACKGROUND_PIC);
+                    hideSoftKeyboard();
                 }
             }
             break;
@@ -297,7 +344,7 @@ public class UserPageActivity extends Activity implements View.OnClickListener {
 
     @Override
     public void onBackPressed() {
-        if(userEditingProfileIntro) {
+        if (userEditingProfileIntro) {
             editIntroMode(false);
             userProfileIntroEditView.setText(prevUserIntro);
         } else {
@@ -325,7 +372,7 @@ public class UserPageActivity extends Activity implements View.OnClickListener {
             Intent storeImageIntent = new Intent(UserService.STORE_USER_PICTURE_TO_DATABASE_ACTION);
             storeImageIntent.setClass(this, UserService.class);
 
-            if(requestCode == RESULT_LOAD_PROFILE_PIC) {
+            if (requestCode == RESULT_LOAD_PROFILE_PIC) {
                 //Set the image received as the current user image of the UserPageActivity
                 userProfileImageView.setImageBitmap(userImage);
                 //Store the image received in the internal storage
@@ -353,14 +400,14 @@ public class UserPageActivity extends Activity implements View.OnClickListener {
 
     private void makeViewsVisible() {
         //First checks to see if all of the user informations are loaded before updating the views
-        if(userProfileImageLoaded && userBackgroundImageLoaded && userPrimitiveDataLoaded) {
+        if (userProfileImageLoaded && userBackgroundImageLoaded && userPrimitiveDataLoaded) {
             progressBar.setVisibility(View.GONE);
             viewContainer.setVisibility(View.VISIBLE);
         }
     }
 
     private void editIntroMode(boolean onOrOff) {
-        if(onOrOff) {
+        if (onOrOff) {
             //Save the current user intro in case they cancel
             prevUserIntro = userProfileIntroEditView.getText().toString();
 
@@ -421,67 +468,36 @@ public class UserPageActivity extends Activity implements View.OnClickListener {
         //Creates a reference for the location where the user media link is stored ordered by time
         DatabaseReference databaseReference = UserDatabase.getUserMediaListReference(userId);
         //Query all of the urls ordered by their keys
-        Query urlQuery = databaseReference.orderByKey();
-        //Adds a value listener to the query to notify the application when it is done
-        urlQuery.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                ArrayDeque<String> urlList = new ArrayDeque<>();
-                //Get the list
-                String urlString = "";
-                String mediaType = "";
-                for(DataSnapshot mediaSnapshot : dataSnapshot.getChildren()) {
-                    mediaType = (String) mediaSnapshot.child(UserDatabase.USER_MEDIA_TYPE_KEY).getValue();
-                    urlString = (String) mediaSnapshot.child(UserDatabase.USER_URL_KEY).getValue();
-                    if(mediaType.charAt(0) == 'i'){
-                        urlString = urlString + 'i';
-                    } else if(mediaType.charAt(0) == 'v') {
-                        urlString = urlString + 'v';
-                        urlString = urlString + 'v';
-                    }
-                    urlList.addFirst(urlString);
-                }
-                //TODO: Finished adding the url list, upload grid after this
-                //I didn't know if you still needed to know if it was an image or video but added it just in case
-                //------------------Logic Here------------------//
-                loadGrid(urlList);
-
-
-                //----------------End Logic---------------------//
-
-                //TODO; Daniel needs to add the progress bar to the grid layout and make it dissapear everything is loaded
-
-
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-
-            }
-        });
-
+        urlQuery = databaseReference.orderByKey();
     }
 
-    public void loadGrid(ArrayDeque<String> urlList){
+    public void loadGrid(ArrayDeque<String> urlList) {
         String combinedString;
         String uriString;
         char uriType;
         int size = urlList.size();
         Log.d("urlList size", "" + size);
 
-        for(int i = 0; i < size; i++){
+        for (int i = 0; i < size; i++) {
             combinedString = urlList.poll();
             Log.d("Combined String", combinedString);
             uriString = combinedString.substring(0, combinedString.length() - 2);
             Log.d("uriString", uriString);
-            uriType = combinedString.charAt(combinedString.length() -1);
-            Log.d("uriType", ""+ uriType);
-            if(uriType == 'i'){
+            uriType = combinedString.charAt(combinedString.length() - 1);
+            Log.d("uriType", "" + uriType);
+            if (uriType == 'i') {
                 imageAdapter.addImageUrlString(uriString);
+            } else if (uriType == 'v') {
             }
-            else if(uriType == 'v'){
-            }
-            imageAdapter.notify();
+            gridView.invalidateViews();
+        }
+    }
+
+    private void hideSoftKeyboard() {
+        View view = this.getCurrentFocus();
+        if(view != null) {
+            InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+            imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
         }
     }
 
