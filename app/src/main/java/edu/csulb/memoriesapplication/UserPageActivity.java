@@ -449,6 +449,9 @@ public class UserPageActivity extends Activity implements View.OnClickListener {
         }
     }
 
+    /**
+     * define the actiity's transitions
+     */
     public void setTransitions() {
         Slide enterSlide = new Slide();
         Slide exitSlide = new Slide();
@@ -469,6 +472,7 @@ public class UserPageActivity extends Activity implements View.OnClickListener {
         urlQuery = databaseReference.orderByKey();
     }
 
+    //load pictures from the UrlList to the grid
     public void loadGrid(ArrayDeque<String> urlList) {
         String combinedString;
         String uriString;
@@ -476,6 +480,8 @@ public class UserPageActivity extends Activity implements View.OnClickListener {
         int size = urlList.size();
         Log.d("urlList size", "" + size);
 
+        //parse each url in UrlLIst
+        //urls are appended with "i" or "v' for image or video
         for (int i = 0; i < size; i++) {
             combinedString = urlList.poll();
             Log.d("Combined String", combinedString);
@@ -487,6 +493,8 @@ public class UserPageActivity extends Activity implements View.OnClickListener {
                 imageAdapter.addImageUrlString(uriString);
             } else if (uriType == 'v') {
             }
+
+            //prompt gridview to refresh views
             gridView.invalidateViews();
         }
     }

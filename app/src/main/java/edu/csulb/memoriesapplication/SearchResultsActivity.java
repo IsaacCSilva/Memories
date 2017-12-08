@@ -34,6 +34,7 @@ public class SearchResultsActivity extends AppCompatActivity {
     private ArrayList<Polaroid> polaroids;
     private CardViewAdapter rvAdapter;
     private Query urlQuery;
+    private SimpleExoPlayerView currentlyPlayingVideo;
 
     private ValueEventListener valueEventListener = new ValueEventListener() {
         @Override
@@ -71,6 +72,8 @@ public class SearchResultsActivity extends AppCompatActivity {
         linearLayoutManager = new LinearLayoutManager(this.getApplicationContext());
         recyclerView.setLayoutManager(linearLayoutManager);
         recyclerView.setAdapter(rvAdapter);
+        //create custom onScrollChange listener to pause/play videos
+        //based on scrolling
         recyclerView.setOnScrollChangeListener(new View.OnScrollChangeListener() {
             @Override
             public void onScrollChange(View v, int scrollX, int scrollY, int oldScrollX, int oldScrollY) {
@@ -86,8 +89,20 @@ public class SearchResultsActivity extends AppCompatActivity {
                             SimpleExoPlayerView videoView = (SimpleExoPlayerView) ((RelativeLayout) childView).getChildAt(0);
                             SimpleExoPlayer simpleExoPlayer = videoView.getPlayer();
                             simpleExoPlayer.setPlayWhenReady(true);
+                            if (currentlyPlayingVideo != null && currentlyPlayingVideo != videoView) {
+                                SimpleExoPlayer playerToPause = currentlyPlayingVideo.getPlayer();
+                                playerToPause.setPlayWhenReady(false);
+                            }
+                            currentlyPlayingVideo = videoView;
+                        } else if (currentlyPlayingVideo != null) {
+                            SimpleExoPlayer playerToPause = currentlyPlayingVideo.getPlayer();
+                            playerToPause.setPlayWhenReady(false);
                         }
+
                     }
+
+                    //if the first visible view is not the first completely visible
+                    //pause the video of the first completely visible if applicable
                     if (position2 != -1 && position2 != position1) {
                         Log.d("first visible item postion", "" + position2);
                         View view2 = (View) ((LinearLayoutManager) recyclerView.getLayoutManager()).findViewByPosition(position2);
@@ -95,7 +110,7 @@ public class SearchResultsActivity extends AppCompatActivity {
                         if (childView instanceof RelativeLayout) {
                             SimpleExoPlayerView videoView = (SimpleExoPlayerView) ((RelativeLayout) childView).getChildAt(0);
                             SimpleExoPlayer simpleExoPlayer = videoView.getPlayer();
-                            simpleExoPlayer.setPlayWhenReady(true);
+                            simpleExoPlayer.setPlayWhenReady(false);
                         }
                     }
                 }
@@ -184,7 +199,14 @@ public class SearchResultsActivity extends AppCompatActivity {
         urlList.add(0, urlString);
     }
 
-    private void loadPolaroids(){
+    /**
+     * parse through the urls contained in urlList
+     * instatiate polaroids and add to polaroids ArrayList
+     * notify the recyclerview adapter of change in dataset
+     */
+    private void loadPolaroids() {
+        //new query, start from scratch
+        //clear polaroids
         polaroids.clear();
         String combinedString;
         String uriString;
@@ -192,21 +214,37 @@ public class SearchResultsActivity extends AppCompatActivity {
         int size = urlList.size();
         Log.d("urlList size", "" + size);
 
-        for(int i = 0; i < size; i++){
+        //parse each url in UrlLIst
+        //urls are appended with "i" or "v' for image or video
+        for (int i = 0; i < size; i++) {
             combinedString = urlList.get(i);
             Log.d("Combined String", combinedString);
             uriString = combinedString.substring(0, combinedString.length() - 2);
             Log.d("uriString", uriString);
-            uriType = combinedString.charAt(combinedString.length() -1);
-            Log.d("uriType", ""+ uriType);
-            if(uriType == 'i'){
+            uriType = combinedString.charAt(combinedString.length() - 1);
+            Log.d("uriType", "" + uriType);
+
+            //if image url, send through imgUrl parameter
+            if (uriType == 'i') {
                 polaroids.add(new Polaroid(null, Uri.parse(uriString)));
-            }
-            else if(uriType == 'v'){
+                //else send through vidUrl parameter
+            } else if (uriType == 'v') {
                 Log.d("Latest loadPolaroid()", "loading video");
                 polaroids.add(new Polaroid(Uri.parse(uriString), null));
             }
+
+            //notifty adapter of dataset change
             rvAdapter.notifyDataSetChanged();
+        }
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        //pause video if activity loses foreground
+        if (currentlyPlayingVideo != null) {
+            SimpleExoPlayer playerToPause = currentlyPlayingVideo.getPlayer();
+            playerToPause.setPlayWhenReady(false);
         }
     }
 }

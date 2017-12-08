@@ -79,6 +79,7 @@ public class TrendingActivity extends AppCompatActivity {
     private SwipeRefreshLayout swipeRefreshLayout;
     private boolean userHasRefreshedAnimation;
     private SearchView searchView;
+    private SimpleExoPlayerView currentlyPlayingVideo;
 
     //Value event listener for the query
     ValueEventListener valueEventListener = new ValueEventListener() {
@@ -166,6 +167,7 @@ public class TrendingActivity extends AppCompatActivity {
         Intent intent = getIntent();
         int slideDirection = 0;
         if (intent != null) {
+            //get direction to slide in from
             slideDirection = intent.getIntExtra("slide edge", 0);
         }
 
@@ -198,6 +200,9 @@ public class TrendingActivity extends AppCompatActivity {
         linearLayoutManager = new LinearLayoutManager(this.getApplicationContext());
         recyclerView.setLayoutManager(linearLayoutManager);
         recyclerView.setAdapter(rvAdapter);
+
+        //create onScrollChange listener to play/pause videos
+        //based on scrolling
         recyclerView.setOnScrollChangeListener(new View.OnScrollChangeListener() {
             @Override
             public void onScrollChange(View v, int scrollX, int scrollY, int oldScrollX, int oldScrollY) {
@@ -213,8 +218,20 @@ public class TrendingActivity extends AppCompatActivity {
                             SimpleExoPlayerView videoView = (SimpleExoPlayerView) ((RelativeLayout) childView).getChildAt(0);
                             SimpleExoPlayer simpleExoPlayer = videoView.getPlayer();
                             simpleExoPlayer.setPlayWhenReady(true);
+                            if (currentlyPlayingVideo != null && currentlyPlayingVideo != videoView) {
+                                SimpleExoPlayer playerToPause = currentlyPlayingVideo.getPlayer();
+                                playerToPause.setPlayWhenReady(false);
+                            }
+                            currentlyPlayingVideo = videoView;
+                        } else if (currentlyPlayingVideo != null) {
+                            SimpleExoPlayer playerToPause = currentlyPlayingVideo.getPlayer();
+                            playerToPause.setPlayWhenReady(false);
                         }
+
                     }
+
+                    //if the first visible view is not the first completely visible
+                    //pause the video of the first completely visible if applicable
                     if (position2 != -1 && position2 != position1) {
                         Log.d("first visible item postion", "" + position2);
                         View view2 = (View) ((LinearLayoutManager) recyclerView.getLayoutManager()).findViewByPosition(position2);
@@ -222,7 +239,7 @@ public class TrendingActivity extends AppCompatActivity {
                         if (childView instanceof RelativeLayout) {
                             SimpleExoPlayerView videoView = (SimpleExoPlayerView) ((RelativeLayout) childView).getChildAt(0);
                             SimpleExoPlayer simpleExoPlayer = videoView.getPlayer();
-                            simpleExoPlayer.setPlayWhenReady(true);
+                            simpleExoPlayer.setPlayWhenReady(false);
                         }
                     }
                 }
@@ -418,6 +435,12 @@ public class TrendingActivity extends AppCompatActivity {
     }
 
 
+    /**
+     * set the activity's transition
+     * must receive a slide direction to know which
+     * edge to enter from
+     * @param slideDirection    direction to slide in from
+     */
     public void setTransitions(int slideDirection) {
         Log.d("Slide Direction", "" + slideDirection);
         Slide enterSlide = new Slide();
@@ -517,6 +540,11 @@ public class TrendingActivity extends AppCompatActivity {
         loadPolaroids();
     }
 
+    /**
+     * parse through the urls contained in urlList
+     * instatiate polaroids and add to polaroids ArrayList
+     * notify the recyclerview adapter of change in dataset
+     */
     private void loadPolaroids() {
         polaroids.clear();
         String combinedString;
@@ -525,6 +553,8 @@ public class TrendingActivity extends AppCompatActivity {
         int size = urlList.size();
         Log.d("urlList size", "" + size);
 
+        //parse each url in UrlLIst
+        //urls are appended with "i" or "v' for image or video
         for (int i = 0; i < size; i++) {
             combinedString = urlList.get(i).getUrl();
             Log.d("Combined String", combinedString);
@@ -538,6 +568,8 @@ public class TrendingActivity extends AppCompatActivity {
                 Log.d("Latest loadPolaroid()", "loading video");
                 polaroids.add(new Polaroid(Uri.parse(uriString), null));
             }
+
+            //notify adapter of dataset change
             rvAdapter.notifyDataSetChanged();
         }
 
@@ -545,6 +577,16 @@ public class TrendingActivity extends AppCompatActivity {
         if(userHasRefreshedAnimation) {
             swipeRefreshLayout.setRefreshing(false);
             userHasRefreshedAnimation = false;
+        }
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        //pause video if activity loses foreground
+        if (currentlyPlayingVideo != null) {
+            SimpleExoPlayer playerToPause = currentlyPlayingVideo.getPlayer();
+            playerToPause.setPlayWhenReady(false);
         }
     }
 }

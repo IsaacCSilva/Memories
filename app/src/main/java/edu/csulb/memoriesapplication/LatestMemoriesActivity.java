@@ -187,6 +187,8 @@ public class LatestMemoriesActivity extends AppCompatActivity {
         linearLayoutManager = new LinearLayoutManager(this.getApplicationContext());
         recyclerView.setLayoutManager(linearLayoutManager);
         recyclerView.setAdapter(rvAdapter);
+        //create custom onScrollChange listener to pause/play videos
+        //based on scrolling
         recyclerView.setOnScrollChangeListener(new View.OnScrollChangeListener() {
             @Override
             public void onScrollChange(View v, int scrollX, int scrollY, int oldScrollX, int oldScrollY) {
@@ -213,6 +215,9 @@ public class LatestMemoriesActivity extends AppCompatActivity {
                         }
 
                     }
+
+                    //if the first visible view is not the first completely visible
+                    //pause the video of the first completely visible if applicable
                     if (position2 != -1 && position2 != position1) {
                         Log.d("first visible item postion", "" + position2);
                         View view2 = (View) ((LinearLayoutManager) recyclerView.getLayoutManager()).findViewByPosition(position2);
@@ -415,7 +420,9 @@ public class LatestMemoriesActivity extends AppCompatActivity {
         }
     }
 
-
+    /**
+     * define the activity's transitions
+     */
     public void setTransitions() {
         Slide enterSlide = new Slide();
         Slide exitSlide = new Slide();
@@ -429,7 +436,14 @@ public class LatestMemoriesActivity extends AppCompatActivity {
         getWindow().setReturnTransition(enterSlide);
     }
 
+    /**
+     * parse through the urls contained in urlList
+     * instatiate polaroids and add to polaroids ArrayList
+     * notify the recyclerview adapter of change in dataset
+     */
     private void loadPolaroids() {
+        //new query, start from scratch
+        //clear polaroids
         polaroids.clear();
         String combinedString;
         String uriString;
@@ -437,6 +451,8 @@ public class LatestMemoriesActivity extends AppCompatActivity {
         int size = urlList.size();
         Log.d("urlList size", "" + size);
 
+        //parse each url in UrlLIst
+        //urls are appended with "i" or "v' for image or video
         for (int i = 0; i < size; i++) {
             combinedString = urlList.get(i);
             Log.d("Combined String", combinedString);
@@ -444,12 +460,17 @@ public class LatestMemoriesActivity extends AppCompatActivity {
             Log.d("uriString", uriString);
             uriType = combinedString.charAt(combinedString.length() - 1);
             Log.d("uriType", "" + uriType);
+
+            //if image url, send through imgUrl parameter
             if (uriType == 'i') {
                 polaroids.add(new Polaroid(null, Uri.parse(uriString)));
+                //else send through vidUrl parameter
             } else if (uriType == 'v') {
                 Log.d("Latest loadPolaroid()", "loading video");
                 polaroids.add(new Polaroid(Uri.parse(uriString), null));
             }
+
+            //notifty adapter of dataset change
             rvAdapter.notifyDataSetChanged();
         }
 
@@ -463,6 +484,7 @@ public class LatestMemoriesActivity extends AppCompatActivity {
     @Override
     public void onPause() {
         super.onPause();
+        //pause video if activity loses foreground
         if (currentlyPlayingVideo != null) {
             SimpleExoPlayer playerToPause = currentlyPlayingVideo.getPlayer();
             playerToPause.setPlayWhenReady(false);
@@ -554,6 +576,8 @@ public class LatestMemoriesActivity extends AppCompatActivity {
         urlList = new ArrayList<>();
     }
 
+    //refresh the recycleview with a new query
+    //if the user has chosen to refresh
     private void userHasRefreshed() {
         getUserLocationAndInitializeQuery(true);
         recyclerView.scrollToPosition(0);
