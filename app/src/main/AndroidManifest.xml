@@ -17,7 +17,8 @@
         android:theme="@style/AppTheme">
         <activity
             android:name=".LoginActivity"
-            android:label="@string/app_name">
+            android:label="@string/app_name"
+            android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -35,30 +36,36 @@
                 android:resource="@xml/file_paths" />
         </provider>
 
-        <activity android:name=".CreateAccountActivity"></activity>
+        <activity android:name=".CreateAccountActivity"
+            android:screenOrientation="portrait"></activity>
         <activity
             android:name=".TrendingActivity"
             android:launchMode="singleTop"
-            android:label="Trending Memories">
+            android:label="Trending Memories"
+            android:screenOrientation="portrait">
             <meta-data
                 android:name="android.app.searchable"
                 android:resource="@xml/searchable" />
         </activity>
-        <activity android:name=".UserPageActivity"></activity>
+        <activity android:name=".UserPageActivity"
+            android:screenOrientation="portrait"></activity>
         <activity
             android:name=".LatestMemoriesActivity"
-            android:label="Latest Memories">
+            android:label="Latest Memories"
+            android:screenOrientation="portrait">
             <meta-data
                 android:name="android.app.searchable"
                 android:resource="@xml/searchable" />
         </activity>
         <activity
             android:name=".Setting"
-            android:label="Settings">
+            android:label="Settings"
+            android:screenOrientation="portrait">
 
         </activity>
         <activity android:name=".SearchResultsActivity"
-            android:label="Search Results">
+            android:label="Search Results"
+            android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.SEARCH" />
             </intent-filter>
