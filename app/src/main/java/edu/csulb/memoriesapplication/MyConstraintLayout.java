@@ -48,6 +48,13 @@ public class MyConstraintLayout extends ConstraintLayout {
 
     }
 
+    /**
+     * determine whether the touch event is an attempt to swipe to another activity
+     * if so, handle here
+     * otherwise pass down to children
+     * @param e
+     * @return  true/false whether to consume event or pass on
+     */
     @Override
     public boolean onInterceptTouchEvent(MotionEvent e){
         if(e.getAction() == e.ACTION_MOVE) {
@@ -82,6 +89,13 @@ public class MyConstraintLayout extends ConstraintLayout {
         return false;
     }
 
+    /**
+     * determine if touch event is an attempt to swipe to activity
+     * otherwise any non-intercepted touch will trigger new activity
+     * if so, launch appropriate activity
+     * @param e the motion event
+     * @return  true/false whether to consume event or pass one to children
+     */
     @Override
     public boolean onTouchEvent(MotionEvent e){
         if(e.getAction() == e.ACTION_MOVE && deltaX == 0) {

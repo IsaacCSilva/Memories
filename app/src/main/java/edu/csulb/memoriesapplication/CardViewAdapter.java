@@ -174,6 +174,7 @@ public class CardViewAdapter extends RecyclerView.Adapter<CardViewAdapter.CardVi
 
         FirebaseStorage firebaseStorage = FirebaseStorage.getInstance();
 
+        //if polaroid is an image
         if(polaroid.getImageUri() != null){
             //load image from Uri
             StorageReference imgReference = firebaseStorage.getReferenceFromUrl(polaroid.getImageUri().toString());
@@ -187,6 +188,7 @@ public class CardViewAdapter extends RecyclerView.Adapter<CardViewAdapter.CardVi
             cardView.addView(imageView);
 
         }
+        //if polaroid is a video
         else if(polaroid.getVideoUri() != null){
             this.position = position;
             this.cardView =  holder.cardView;

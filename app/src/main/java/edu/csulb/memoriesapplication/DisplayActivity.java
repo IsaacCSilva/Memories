@@ -1,6 +1,7 @@
 package edu.csulb.memoriesapplication;
 
 import android.content.Intent;
+import android.graphics.Matrix;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 
@@ -28,6 +29,9 @@ public class DisplayActivity extends AppCompatActivity implements View.OnClickLi
         //Set image value
         imagePath = intent.getStringExtra("filepath");
         image = BitmapFactory.decodeFile(imagePath);
+        Matrix matrix = new Matrix();
+        matrix.postRotate(90);
+        image = Bitmap.createBitmap(image, 0, 0, image.getWidth(), image.getHeight(), matrix, true);
         initializeImageThumbnail(intent);
         submitButton = (Button) this.findViewById(R.id.submitMediaButton);
         submitButton.setOnClickListener(this);

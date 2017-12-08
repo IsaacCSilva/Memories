@@ -53,6 +53,7 @@ public class ImageAdapter extends BaseAdapter {
                 imageView = (ImageView) convertView;
             }
 
+            //load image from firebase using Glide
             FirebaseStorage firebaseStorage = FirebaseStorage.getInstance();
             StorageReference imgReference = firebaseStorage.getReferenceFromUrl(mThumbUrls.get(position));
 
@@ -62,6 +63,7 @@ public class ImageAdapter extends BaseAdapter {
                     .bitmapTransform(new RotateTransformation(mContext, 90), new CenterCrop(mContext))
                     .placeholder(R.color.cardview_dark_background)
                     .into(imageView);
+
             return imageView;
         }
 
