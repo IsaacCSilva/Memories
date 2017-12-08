@@ -324,15 +324,18 @@ public class LatestMemoriesActivity extends AppCompatActivity {
         return true;
     }
 
+    // Toolbar icon actions
     @Override
     public boolean onOptionsItemSelected(MenuItem items) {
         switch (items.getItemId()) {
+            // Settings activity
             case R.id.action_settings: {
                 final Intent intent = new Intent(LatestMemoriesActivity.this, Setting.class);
                 startActivity(intent);
                 Toast.makeText(getBaseContext(), "Information: ", Toast.LENGTH_SHORT).show();
                 return true;
             }
+            // Camera activity
             case R.id.action_cam: {
                 if (accessLocationPermission) {
                     dispatchTakePictureIntent();
@@ -378,6 +381,7 @@ public class LatestMemoriesActivity extends AppCompatActivity {
         }
     }
 
+    // Create Intent to start camera
     private void dispatchTakePictureIntent() {
         Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         // Ensure that there's a camera activity to handle the intent
@@ -409,9 +413,11 @@ public class LatestMemoriesActivity extends AppCompatActivity {
         return image;
     }
 
+    // Called when camera activity ends
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
         if (requestCode == REQUEST_TAKE_PHOTO && resultCode == RESULT_OK) {
+            // Create Intent with filepath of the photo taken
             Intent sendIntent = new Intent(LatestMemoriesActivity.this, DisplayActivity.class);
 
             sendIntent.putExtra("filepath", mCurrentPhotoPath);

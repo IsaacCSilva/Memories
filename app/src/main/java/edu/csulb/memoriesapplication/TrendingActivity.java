@@ -338,15 +338,18 @@ public class TrendingActivity extends AppCompatActivity {
         return true;
     }
 
+    // Toolbar icon actions
     @Override
     public boolean onOptionsItemSelected(MenuItem items) {
         switch (items.getItemId()) {
+            // Settings activity
             case R.id.action_settings: {
                 Intent intent = new Intent(TrendingActivity.this, Setting.class);
                 startActivity(intent);
                 Toast.makeText(getBaseContext(), "Information: ", Toast.LENGTH_SHORT).show();
                 break;
             }
+            // Camera activity
             case R.id.action_cam: {
                 if (accessLocationPermission) {
                     dispatchTakePictureIntent();
@@ -392,6 +395,7 @@ public class TrendingActivity extends AppCompatActivity {
         }
     }
 
+    // Create Intent to start camera
     private void dispatchTakePictureIntent() {
         Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         // Ensure that there's a camera activity to handle the intent
@@ -423,9 +427,11 @@ public class TrendingActivity extends AppCompatActivity {
         return image;
     }
 
+    // Called when camera activity ends
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
         if (requestCode == REQUEST_TAKE_PHOTO && resultCode == RESULT_OK) {
+            // Create Intent with filepath of the photo taken
             Intent sendIntent = new Intent(TrendingActivity.this, DisplayActivity.class);
 
             sendIntent.putExtra("filepath", mCurrentPhotoPath);
@@ -474,6 +480,7 @@ public class TrendingActivity extends AppCompatActivity {
     private void getUserLocationAndInitializeQuery(final boolean initializeQuery) {
         FusedLocationProviderClient fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
         try {
+            // Get last known location using Google Play Services
             fusedLocationProviderClient.getLastLocation().addOnSuccessListener(new OnSuccessListener<Location>() {
                 @Override
                 public void onSuccess(Location location) {
@@ -482,6 +489,7 @@ public class TrendingActivity extends AppCompatActivity {
                         double latitude = location.getLatitude();
                         Geocoder geocoder = new Geocoder(TrendingActivity.this, Locale.getDefault());
                         try {
+                            // Reverse geocoding to get city and state
                             List<Address> addressList = geocoder.getFromLocation(latitude, longitude, 1);
                             city = addressList.get(0).getLocality();
                             state = addressList.get(0).getAdminArea();
