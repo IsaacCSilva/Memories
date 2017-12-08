@@ -4,7 +4,7 @@
     <string name="action_camera">Camera</string>
     <string name="login_hint">Email Address</string>
     <string name="password_hint">Password</string>
-    <string name="login_button_text">LogIn</string>
+    <string name="login_button_text">Log In</string>
     <string name="create_account_button_text">Create an Account</string>
     <string name="create_password_2">Re-Enter Password</string>
     <string name="create_password">Password</string>
