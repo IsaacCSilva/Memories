@@ -22,51 +22,58 @@ import android.widget.Toast;
 
 import java.util.Locale;
 
-public class Setting extends Activity{
+public class Setting extends Activity implements View.OnClickListener{
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
+        // buttons for help and change user
         Button b2 = (Button) findViewById(R.id.button2);
         Button b1 = (Button) findViewById(R.id.button1);
-        b2.setOnClickListener((View.OnClickListener) this);
-        b1.setOnClickListener((View.OnClickListener) this);}
-            public void onClick(View view) {
-                switch (view.getId()) {
-                    case R.id.button2:
-                        Intent helpIntent = new Intent(Setting.this, HelpActivity.class);
-                        startActivity(helpIntent);
-                        break;
-                    case R.id.button1:
-                        final Intent editIntent = new Intent(Setting.this, EditProfile.class);
-                        startActivity(editIntent);
-                        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(Setting.this);
-                        alertDialogBuilder
-                                .setTitle("Are you sure you want to proceed with the edit? ")
-                                .setCancelable(false)
-                                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-                                    public void onClick(DialogInterface dialog, int id) {
-                                        startActivity(editIntent);
-                                    }
-                                })
-                                .setNegativeButton("No", new DialogInterface.OnClickListener() {
-                                    public void onClick(DialogInterface dialog, int id) {
-                                        dialog.cancel();
-                                    }
-                                });
-                        alertDialogBuilder.create();
-                        Dialog d = alertDialogBuilder.show();
-                        int textViewId = d.getContext().getResources().getIdentifier("android:id/alertTitle", null, null);
-                        TextView tv = (TextView) d.findViewById(textViewId);
-                        tv.setTextColor(getResources().getColor(R.color.colorAccent));
-                        break;
-                }
-            }
+        // set click listeners
+        b2.setOnClickListener(this);
+        b1.setOnClickListener(this);
+    }
 
+    @Override
+    public void onClick(View view) {
+        switch (view.getId()) {
+            //send intent to help
+            case R.id.button2:
+                Intent helpIntent = new Intent(Setting.this, HelpActivity.class);
+                startActivity(helpIntent);
+                break;
+            // sending intent to edit profile
+            case R.id.button1:
+                // alert dialogbuilder  use for question user if he/she wants to change user page
+                AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(Setting.this);
+                alertDialogBuilder
+                        .setTitle("Are you sure you want to proceed with the edit? ")
+                        .setCancelable(false)
+                        .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int id) {
+                                Intent editIntent = new Intent(Setting.this, EditProfile.class);
+                                startActivity(editIntent);
+                            }
+                        })
+                        .setNegativeButton("No", new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int id) {
+                                dialog.cancel();
+                            }
+                        });
+                alertDialogBuilder.create();
+                Dialog d = alertDialogBuilder.show();
+                int textViewId = d.getContext().getResources().getIdentifier("android:id/alertTitle", null, null);
+                TextView tv = (TextView) d.findViewById(textViewId);
+                tv.setTextColor(getResources().getColor(R.color.colorAccent));
+                break;
+        }
+    }
 
 
     private void setSupportActionBar(Toolbar toolbar) {
     }
+
     public void loadSpinnerData() {
         Spinner spinner = (Spinner) findViewById(R.id.spinner);
         // Create an ArrayAdapter using the string array and a default spinner layout
@@ -77,9 +84,11 @@ public class Setting extends Activity{
         // Apply the adapter to the spinner
         spinner.setAdapter(adapter);
     }
-   public Resources res;
-   public String locale;
 
+    public Resources res;
+    public String locale;
+
+    // this should help with changing languages
     public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
         Configuration config;
         config = new Configuration(res.getConfiguration());
@@ -102,7 +111,8 @@ public class Setting extends Activity{
     }
 
 
-public void onNothingSelected(AdapterView<?> adapterView){}
+    public void onNothingSelected(AdapterView<?> adapterView) {
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -112,6 +122,7 @@ public void onNothingSelected(AdapterView<?> adapterView){}
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
+        super.onOptionsItemSelected(item);
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
@@ -119,5 +130,6 @@ public void onNothingSelected(AdapterView<?> adapterView){}
             return true;
         }
 
-        return super.onOptionsItemSelected(item);
-    }}
+        return true;
+    }
+}

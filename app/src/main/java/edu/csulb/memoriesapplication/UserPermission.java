@@ -8,6 +8,7 @@ import android.support.v4.content.ContextCompat;
 
 /**
  * Created by Daniel on 11/3/2017.
+ * Checks the user's permission based on the permission defined in the enumerator
  */
 
 public class UserPermission {

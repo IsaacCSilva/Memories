@@ -208,12 +208,14 @@ public class UserService extends IntentService {
             }
             break;
             case UPDATE_USER_INTRO: {
+                //Action to update the user's introduction
                 String userIntro = intent.getStringExtra(UserDatabase.USER_INTRODUCTION);
                 String userId = getUserId();
                 UserDatabase.updateUserIntroduction(userId, userIntro);
             }
             break;
             case STORE_MEMORY_IMAGE_TO_DATABASE_ACTION: {
+                //Stores the image as notified in the filepath into Firebase
                 String imagePath = intent.getStringExtra("filepath");
                 final Bitmap image = BitmapFactory.decodeFile(imagePath);
                 FusedLocationProviderClient fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
@@ -249,6 +251,7 @@ public class UserService extends IntentService {
         }
     }
 
+    //Retrieves the user id
     private String getUserId() {
         FirebaseAuth firebaseAuth = FirebaseAuth.getInstance();
         return firebaseAuth.getCurrentUser().getUid();

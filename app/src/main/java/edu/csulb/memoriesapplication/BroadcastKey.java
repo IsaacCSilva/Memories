@@ -2,6 +2,7 @@ package edu.csulb.memoriesapplication;
 
 /**
  * Created by Daniel on 11/3/2017.
+ * Class to enhance consistency of the use of the Local Broadcast Manager
  */
 
 public class BroadcastKey {

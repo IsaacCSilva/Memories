@@ -13,6 +13,7 @@ import java.io.ByteArrayOutputStream;
 
 /**
  * Created by Daniel on 11/7/2017.
+ * Creates a centralized way to interface with Firebase Storage
  */
 
 public class UserFirebaseStorage {
@@ -26,6 +27,7 @@ public class UserFirebaseStorage {
         BACKGROUND
     }
 
+    //Saves the specified image file to the database in the correct corresponding location
     public void saveImageFile(String userId, Bitmap image, ImageType imageType){
         FirebaseStorage firebaseStorage = FirebaseStorage.getInstance();
         StorageReference storageReference = null;
@@ -54,14 +56,16 @@ public class UserFirebaseStorage {
         });
     }
 
-
+    //Retrieves the root file for Firebase Storage
     public StorageReference getRootReference() {
         return FirebaseStorage.getInstance().getReference();
     }
 
+    //Returns a String that signifies the user's id
     public String getUserProfilePicPath(String userId) {
         return USER_PROFILE_PIC_PATH + userId + IMAGE_EXTENSION_TYPE;
     }
+
 
     public String getUserBackgroundPicPath(String userId) {
         return USER_BACKGROUND_PIC_PATH + userId + IMAGE_EXTENSION_TYPE;

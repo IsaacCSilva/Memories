@@ -130,9 +130,6 @@ public class SearchResultsActivity extends AppCompatActivity {
     @Override
     public void onStart(){
         super.onStart();
-        if(urlQuery != null) {
-            urlQuery.addListenerForSingleValueEvent(valueEventListener);
-        }
     }
 
     @Override
@@ -246,5 +243,10 @@ public class SearchResultsActivity extends AppCompatActivity {
             SimpleExoPlayer playerToPause = currentlyPlayingVideo.getPlayer();
             playerToPause.setPlayWhenReady(false);
         }
+    }
+
+    @Override
+    public void onBackPressed() {
+        finish();
     }
 }

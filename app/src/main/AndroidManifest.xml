@@ -37,7 +37,9 @@
         </provider>
 
         <activity android:name=".CreateAccountActivity"
-            android:screenOrientation="portrait"></activity>
+            android:screenOrientation="portrait">
+
+        </activity>
         <activity
             android:name=".TrendingActivity"
             android:launchMode="singleTop"
@@ -48,7 +50,9 @@
                 android:resource="@xml/searchable" />
         </activity>
         <activity android:name=".UserPageActivity"
-            android:screenOrientation="portrait"></activity>
+            android:screenOrientation="portrait">
+
+        </activity>
         <activity
             android:name=".LatestMemoriesActivity"
             android:label="Latest Memories"
@@ -71,8 +75,22 @@
             </intent-filter>
         </activity>
 
-        <service android:name=".UserService"></service>
-        <activity android:name=".DisplayActivity"></activity>
+        <service android:name=".UserService">
+
+        </service>
+        <activity android:name=".DisplayActivity"
+            android:screenOrientation="portrait">
+
+        </activity>
+        <activity android:name=".EditProfile"
+            android:screenOrientation="portrait">
+
+        </activity>
+
+        <activity android:name=".HelpActivity"
+            android:screenOrientation="portrait">
+
+        </activity>
     </application>
 
 </manifest>

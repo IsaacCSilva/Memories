@@ -240,6 +240,12 @@ public class UserPageActivity extends Activity implements View.OnClickListener {
     }
 
     @Override
+    protected void onRestart() {
+        super.onRestart();
+        urlQuery.addListenerForSingleValueEvent(valueEventListener);
+    }
+
+    @Override
     protected void onStart() {
         super.onStart();
         //Call to refresh the user's primitive data everytime this activity is revisited
@@ -252,7 +258,6 @@ public class UserPageActivity extends Activity implements View.OnClickListener {
         //Set that the user's primitive data is no longer valid and to refresh
         userPrimitiveDataLoaded = false;
         urlQuery.removeEventListener(valueEventListener);
-
     }
 
     private void loadUser(User user) {
@@ -470,6 +475,7 @@ public class UserPageActivity extends Activity implements View.OnClickListener {
         DatabaseReference databaseReference = UserDatabase.getUserMediaListReference(userId);
         //Query all of the urls ordered by their keys
         urlQuery = databaseReference.orderByKey();
+        urlQuery.addListenerForSingleValueEvent(valueEventListener);
     }
 
     //load pictures from the UrlList to the grid

@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context="edu.csulb.memoriesapplication.DisplayActivity"
-    android:background="#000000">
+    android:background="@drawable/corkboard">
 
     <ImageView
         android:layout_width="341dp"
