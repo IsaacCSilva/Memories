@@ -13,6 +13,9 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.resource.bitmap.CenterCrop;
+
 public class DisplayActivity extends AppCompatActivity implements View.OnClickListener{
 
     private Button submitButton;
@@ -40,7 +43,13 @@ public class DisplayActivity extends AppCompatActivity implements View.OnClickLi
 
     private void initializeImageThumbnail(Intent intent) {
         ImageView imageView = (ImageView)findViewById(R.id.imageView);
-        imageView.setImageBitmap(image);
+        Glide.with(this)
+                .load(imagePath)
+                .bitmapTransform(new RotateTransformation(this, 90), new CenterCrop(this))
+                .placeholder(R.color.cardview_dark_background)
+                .into(imageView);
+
+//        imageView.setImageBitmap(image);
     }
 
     @Override
