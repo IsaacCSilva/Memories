@@ -28,6 +28,7 @@ public class DisplayActivity extends AppCompatActivity implements View.OnClickLi
         Intent intent = getIntent();
         //Set image value
         imagePath = intent.getStringExtra("filepath");
+        // Decode file into Bitmap
         image = BitmapFactory.decodeFile(imagePath);
         Matrix matrix = new Matrix();
         matrix.postRotate(90);

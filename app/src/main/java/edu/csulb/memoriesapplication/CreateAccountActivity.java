@@ -108,7 +108,7 @@ public class CreateAccountActivity extends Activity implements View.OnClickListe
     }
 
     private boolean passwordGuidelineCheck(String password) {
-
+        // Make sure user meets minimum guidelines for password as defined by the regex
         pattern = Pattern.compile("^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=\\S+$).{7,}$");
         matcher = pattern.matcher(password);
         if(matcher.matches()){
