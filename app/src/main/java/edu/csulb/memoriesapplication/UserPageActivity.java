@@ -244,8 +244,6 @@ public class UserPageActivity extends Activity implements View.OnClickListener {
         super.onStart();
         //Call to refresh the user's primitive data everytime this activity is revisited
         refreshUserInfo();
-        //Adds a value listener to the query to notify the application when it is done
-        urlQuery.addListenerForSingleValueEvent(valueEventListener);
     }
 
     @Override
