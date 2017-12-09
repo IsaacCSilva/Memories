@@ -23,6 +23,7 @@ import com.google.firebase.database.FirebaseDatabase;
 
 /**
  * Created by Daniel on 10/16/2017.
+ * Activity for the user to create an account
  */
 
 public class CreateAccountActivity extends Activity implements View.OnClickListener{
@@ -43,6 +44,7 @@ public class CreateAccountActivity extends Activity implements View.OnClickListe
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_create_account);
         mAuth = FirebaseAuth.getInstance();
+        //Initialize Views
         userEmail = (EditText) this.findViewById(R.id.user_email_create);
         userPassword = (EditText) this.findViewById(R.id.user_password_create);
         userPassword2 = (EditText) this.findViewById(R.id.user_password_create2);
@@ -52,6 +54,7 @@ public class CreateAccountActivity extends Activity implements View.OnClickListe
         createAccountButton.setOnClickListener(this);
     }
 
+    //OnCLick listener for certain events
     @Override
     public void onClick(View view) {
         final String userEmailCreate = userEmail.getText().toString();
@@ -107,6 +110,7 @@ public class CreateAccountActivity extends Activity implements View.OnClickListe
         }
     }
 
+    //Checks the user's password every time to prevent dictionary attacks
     private boolean passwordGuidelineCheck(String password) {
         // Make sure user meets minimum guidelines for password as defined by the regex
         pattern = Pattern.compile("^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=\\S+$).{7,}$");
@@ -117,6 +121,7 @@ public class CreateAccountActivity extends Activity implements View.OnClickListe
         return false;
     }
 
+    //Method to print a toast, just pass in the String to pop up
     private void printToast(String message) {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
     }

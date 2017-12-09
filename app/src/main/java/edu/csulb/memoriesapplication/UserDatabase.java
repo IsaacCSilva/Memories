@@ -10,6 +10,7 @@ import com.google.firebase.database.ValueEventListener;
 
 /**
  * Created by Daniel on 11/7/2017.
+ * Method to interact with the user's information in the database
  */
 
 public class UserDatabase {
@@ -21,6 +22,7 @@ public class UserDatabase {
     private final static String STATE_KEY = "state";
     private final static String CITY_KEY = "city";
     private final static String LIKES_COUNT_KEY = "likesCount";
+
     public enum MediaType{
         IMAGE,
         VIDEO
@@ -32,6 +34,7 @@ public class UserDatabase {
         userIntroReference.setValue(introduction);
     }
 
+    //Adds a media url under the user's information in the database
     static void addMediaUrl(String userId, Uri uri, String city, String state, MediaType mediaType) {
         DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference(USERS);
         incrementPostCount(userId);
@@ -47,6 +50,7 @@ public class UserDatabase {
         userMediaListReference.child(LIKES_COUNT_KEY).setValue(0);
     }
 
+    //Retrieves the root reference based on the user
     static DatabaseReference getUserMediaListReference(String userId) {
         return FirebaseDatabase.getInstance().getReference(USERS).child(userId).child(USER_MEDIA_LIST);
     }

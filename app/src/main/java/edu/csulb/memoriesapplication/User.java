@@ -6,6 +6,7 @@ import android.os.Parcelable;
 import com.google.firebase.database.IgnoreExtraProperties;
 /**
  * Created by Danie on 10/25/2017.
+ * User object organization to store into Firebase as JSON
  */
 
 @IgnoreExtraProperties
@@ -36,6 +37,7 @@ public class User implements Parcelable{
         userPostsCount = in.readInt();
     }
 
+    //Parcelable to be able to send the user accross activities
     public static final Parcelable.Creator CREATOR = new Parcelable.Creator() {
         public User createFromParcel(Parcel in) {
             return new User(in);

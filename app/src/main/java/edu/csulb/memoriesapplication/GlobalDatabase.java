@@ -7,6 +7,7 @@ import com.google.firebase.database.FirebaseDatabase;
 
 /**
  * Created by Daniel on 12/2/2017.
+ * Customizes the storing feature to store it globally instead of just in the user's database
  */
 
 public class GlobalDatabase {
@@ -21,6 +22,7 @@ public class GlobalDatabase {
         VIDEO
     }
 
+    //Adds the URL globally
     public static void addMediaUrl(Uri uri,String city, String state, MediaType mediaType) {
         DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference(GLOBAL_MEDIA_REFERENCE + state);
         databaseReference = databaseReference.push();
@@ -34,6 +36,7 @@ public class GlobalDatabase {
         databaseReference.child(LIKES_COUNT_KEY).setValue(0);
     }
 
+    //Retrieves the Root database reference based on the state that the user is in
     public static DatabaseReference getMediaListReference(String state) {
         return FirebaseDatabase.getInstance().getReference(GLOBAL_MEDIA_REFERENCE + state);
     }

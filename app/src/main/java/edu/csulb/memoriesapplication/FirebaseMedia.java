@@ -4,6 +4,8 @@ import android.support.annotation.NonNull;
 
 /**
  * Created by Daniel on 12/7/2017.
+ * Due to firebase realtime database's constraints on their queries, this class was made
+ * to by pass and further the filter client side
  */
 
 public class FirebaseMedia implements Comparable<FirebaseMedia> {

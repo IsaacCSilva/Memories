@@ -13,6 +13,7 @@ import java.io.IOException;
 
 /**
  * Created by Daniel on 11/7/2017.
+ * Method to store and retrieve files from the internal storage
  */
 
 public class InternalStorage {
@@ -26,6 +27,7 @@ public class InternalStorage {
         BACKGROUND
     }
 
+    //Save an image file based on the file type
     public static void saveImageFile(Context context, ImageType imageType, String userId, Bitmap image) {
         File imageStoragePath = internalUserImageStoragePath(context);
         String fileName = null;
@@ -46,6 +48,7 @@ public class InternalStorage {
         }
     }
 
+    //Retrieves the profile picture from the internal storage
     public static Bitmap getProfilePic(Context context, String userId) {
         File imageStoragePath = internalUserImageStoragePath(context);
         String imageName = IND_USER_PROFILE_PIC + userId + IMAGE_EXTENSION;
@@ -57,6 +60,7 @@ public class InternalStorage {
         return null;
     }
 
+    //Retrieves the background picture from the internal storage
     public static Bitmap getBackgroundPic(Context context, String userId) {
         File imageStoragePath = internalUserImageStoragePath(context);
         String imageName = IND_USER_BACKGROUND_PIC + userId + IMAGE_EXTENSION;
@@ -69,6 +73,7 @@ public class InternalStorage {
     }
 
 
+    //Root files to retrieve or store items to the internal storage
     private static File internalUserImageStoragePath(Context context) {
         ContextWrapper contextWrapper = new ContextWrapper(context.getApplicationContext());
         File path = contextWrapper.getDir(USER_IMAGES_FOLDER, Context.MODE_PRIVATE);

@@ -3,7 +3,9 @@ package edu.csulb.memoriesapplication;
 import android.app.Activity;
 import android.os.Bundle;
 
-
+/**
+ * Help activity to display messages for users
+ */
 public class HelpActivity extends Activity {
     @Override
     public void onCreate(Bundle savedInstanceState) {

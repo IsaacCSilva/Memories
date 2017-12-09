@@ -48,8 +48,6 @@ public class DisplayActivity extends AppCompatActivity implements View.OnClickLi
                 .bitmapTransform(new RotateTransformation(this, 90), new CenterCrop(this))
                 .placeholder(R.color.cardview_dark_background)
                 .into(imageView);
-
-//        imageView.setImageBitmap(image);
     }
 
     @Override
