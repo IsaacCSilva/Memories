@@ -1,5 +1,5 @@
 # MemoriesApplication
-Memories is a location based social media application where the focus is put on the events happening around where the user is.
+Memories is a location based social media application where the focus is not on the user's but the events or "Memories" that the user and the people around him are experiencing.
 
 <p align="center"><img src="https://raw.githubusercontent.com/PenguinDan/MemoriesApplication/master/app/src/main/res/drawable-hdpi/memorieslogo.png?token=AOfdzocliDdEArStdqpATQJdRDmxvnVlks5aSHkiwA%3D%3D" width="200" height="200" /></p>
 
